@@ -1,0 +1,19 @@
+{
+  "video": "S:\\Workspace\\UNIFEI\\TCC\\TCC-Rodrigo\\TCC02\\videos\\VIRAT_S_000201_01_000384_000589.mp4",
+  "frames": {
+    "0": {
+      "timestamp_ms": 0.0,
+      "consolidated": []
+    }
+  },
+  "config": {
+    "method": "BASELINE"
+  },
+  "telemetry": {
+    "warmup_frames": 10,
+    "timings": {},
+    "cpu": {
+      "error": "Biblioteca psutil n\u00e3o instalada ou sem dados"
+    }
+  }
+}

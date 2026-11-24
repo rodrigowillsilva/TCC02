@@ -1,0 +1,75 @@
+{
+  "video": "S:\\Workspace\\UNIFEI\\TCC\\TCC-Rodrigo\\TCC02\\videos\\VIRAT_S_010205_04_000545_000576.mp4",
+  "frames": {
+    "0": {
+      "timestamp_ms": 0.0,
+      "consolidated": [
+        {
+          "x": 277,
+          "y": 235,
+          "w": 11,
+          "h": 31,
+          "class": "person",
+          "conf": 0.7075269818305969
+        },
+        {
+          "x": 216,
+          "y": 229,
+          "w": 10,
+          "h": 32,
+          "class": "person",
+          "conf": 0.2685442864894867
+        }
+      ]
+    }
+  },
+  "config": {
+    "method": "SCHEDULER",
+    "budget": 6,
+    "hunger_weight": 1.0,
+    "heat_weight": 5.0,
+    "decay": 0.9
+  },
+  "telemetry": {
+    "timings": {
+      "00_Pipeline_Total (por frame)": {
+        "calls": 1,
+        "total_seconds": 21.3367,
+        "avg_ms": 21336.74
+      },
+      "01_Fatiamento (Tiler)": {
+        "calls": 1,
+        "total_seconds": 0.0058,
+        "avg_ms": 5.82
+      },
+      "02_Filtro (DecisionBlock)": {
+        "calls": 1,
+        "total_seconds": 0.0001,
+        "avg_ms": 0.11
+      },
+      "03_IA_Infer\u00eancia (YOLO)": {
+        "calls": 1,
+        "total_seconds": 15.1546,
+        "avg_ms": 15154.63
+      },
+      "04_Limpeza (Consolidator NMS)": {
+        "calls": 1,
+        "total_seconds": 5.9938,
+        "avg_ms": 5993.82
+      },
+      "04b_Rastreamento (Tracker)": {
+        "calls": 1,
+        "total_seconds": 0.0001,
+        "avg_ms": 0.07
+      },
+      "05_Renderiza\u00e7\u00e3o_Video": {
+        "calls": 1,
+        "total_seconds": 0.1818,
+        "avg_ms": 181.79
+      }
+    },
+    "cpu": {
+      "error": "Biblioteca psutil n\u00e3o instalada ou sem dados"
+    }
+  }
+}

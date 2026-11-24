@@ -1,0 +1,137 @@
+# Roteiro de Fala — Apresentação TCC02
+**Título:** Estratégias de Inferência Seletiva Baseada em *Tiles* para Aceleração da Detecção de Objetos em Dispositivos de Borda  
+**Autor:** Rodrigo William da Silva  
+
+---
+
+## Slide 1 — Capa
+**[Fala]**  
+"Olá, pessoal. Meu nome é Rodrigo William, sou aluno de Engenharia de Computação aqui na UNIFEI, e hoje vou apresentar o meu Trabalho de Conclusão de Curso, orientado pelo professor Enzo Seraphim e coorientado pela professora Thatiana Seraphim.  
+O tema do meu trabalho é **Estratégias de Inferência Seletiva Baseada em *Tiles* para Aceleração da Detecção de Objetos em Dispositivos de Borda**. O objetivo central é mostrar como nós podemos reduzir drasticamente o uso do detector YOLO em vídeos de segurança, tornando viável o uso de inteligência artificial mantendo a capacidade de detectar objetos pequenos."
+
+---
+
+## Slide 2 — Por que Câmeras de Segurança Reais Ainda Quase Não Usam IA?
+**[Fala]**  
+"Para contextualizar o problema: se olharmos para as câmeras de segurança do mundo real hoje, a grande maioria ainda não usa inteligência artificial de verdade para detectar pessoas continuamente. Elas costumam usar algoritmos clássicos simples.  
+Porém, estudos muito recentes mostram que nós estamos finalmente chegando em um ponto onde usar IA embarcada está se tornando viável graças a modelos compactos como o YOLO. Mesmo assim, o custo da inferência continua sendo o principal problema na borda.  
+E quando tentamos usar o YOLO da maneira mais simples — pegando o quadro inteiro e passando direto para a rede — surge um problema de qualidade: a entrada nativa do YOLO é pequena, de 640×640 pixels. Quando o modelo redimensiona o quadro inteiro para caber nessa entrada, acontece o que vemos à direita: um pedestre distante perde quase todos os seus pixels e fica dificil deectalo."
+
+---
+
+## Slide 3 — Dividir em *Tiles* Salva a Precisão, mas Explode o Custo!
+**[Fala]**  
+"Para resolver esse problema da perda de qualidade no redimensionamento do quadro inteiro, a literatura utiliza a técnica de fatiamento em recortes menores, chamados de *tiles*. Em vez de encolher a imagem toda, nós dividimos o quadro em vários pedaços do tamanho nativo ou menor para o YOLO. Assim, preservamos a resolução original.  
+O problema é que o *tiling*, ao resolver a qualidade, multiplica o custo computacional: eum frame agora se torna varios.  
+O ponto do meu TCC foi observar: em uma câmera de segurança fixa, a maioria desses recortes mostram apenas asfalto, grama e paredes paradas. Não faz sentido acionar uma rede neural dezenas de vezes por segundo para analisar um pedaço de chão vazio.  
+A pergunta da pesquisa então foi: *como nós podemos reduzir o uso do YOLO filtrando ou reaproveitando esses recortes redundantes de forma muito leve antes da rede, acionando o detector apenas nos recortes onde realmente há informação nova?*"
+
+---
+
+## Slide 4 — Objetivos e Trabalhos Correlacionados
+**[Fala]**  
+"Na literatura, nós nos apoiamos em três referências principais:  
+1. O **SAHI**, que formaliza a inferência dividida em *tiles* sobrepostos para detectar objetos pequenos sem precisar retreinar a rede, mas que infere todos os *tiles* de todos os quadros;  
+2. Trabalhos como o **NoScope** e o **Reducto**, que colocam filtros rápidos antes da rede neural para descartar quadros redundantes, mas que tomam essa decisão para o **quadro inteiro** — ou seja, se uma pessoa se mover em um canto, eles mandam processar a imagem inteira;  
+3. E o trabalho de **Plastiras e coautores**, que aplica seleção por *tiles*, mas voltado para câmeras móveis em drones.  
+
+A nossa proposta combina esses elementos para câmeras estáticas: nós tratamos o YOLO como uma **caixa-preta** — sem alterar seus pesos e sem retreinar o modelo — e colocamos antes dele um módulo de decisão que analisa cada *tile* individualmente. Nesse módulo, implementamos e avaliamos dois paradigmas distintos: a **seleção baseada em movimento** e uma proposta autoral de **reaproveitamento baseada em Árvore de *Hash***."
+
+---
+
+## Slide 5 — Visão Geral do Pipeline (Baseline vs. Proposto)
+*(Dica: você pode clicar nos blocos 1 a 5 do fluxo de baixo enquanto fala, se quiser destacar cada um)*  
+**[Fala]**  
+"Neste slide temos a visão geral da arquitetura.  
+Na linha de cima está o nosso **Pipeline de Referência, o *Baseline***: o quadro entra, o *Tiler* divide a imagem em MxN *tiles*, o YOLO é executado obrigatoriamente sobre todos os 15 *tiles*, e o Consolidador unifica as detecções no final.  
+Na linha de baixo está o **Pipeline Proposto**: após dividir o quadro nos MxN *tiles*, eles passam pelo **Bloco de Decisão**. Em poucos milissegundos, esse bloco decide quais *tiles* realmente precisam ir para o YOLO — o subconjunto **S** — e, no caso do método por *Hash*, também recupera diretamente da memória as detecções de *tiles* repetidos — o conjunto **C**. Assim, o YOLO processa em lote apenas uma pequena fração dos recortes."
+
+---
+
+## Slide 6 — Etapas 1 e 2: Quadro e Divisão em *Tiles* com Overlap Automático
+*(Dica: mostre primeiro a visualização padrão "Com Overlap" e depois clique no botão "Por que precisamos de Overlap?")*  
+**[Fala]**  
+"Detalhando cada etapa: nas Etapas 1 e 2 nós recebemos o feed de video e dividimos em uma grade de recortes fixos.  
+Um ponto importante aqui é a sobreposição — o *overlap* entre os *tiles*. Em vez de usar um valor arbitrário, nós distribuímos as posições iniciais uniformemente por interpolação linear, o que gera automaticamente uma sobreposição de 80 pixels na horizontal e 120 pixels na vertical, cobrindo exatamente todo o quadro.  
+*(Clique em 'Por que precisamos de Overlap?')*  
+Se nós fizéssemos um corte seco, sem sobreposição, aconteceria isso: um pedestre caminhando sobre a linha divisória seria cortado ao meio entre dois recortes, fazendo o detector falhar ou gerar detecções parciais.  
+*(Volte para 'Com Overlap Automático')*  
+Com a faixa de sobreposição, garantimos que esse pedestre apareça inteiro dentro dos *tiles* vizinhos."
+
+---
+
+## Slide 7 — Etapa 3 (Paradigma 1): Seleção por Movimento (FrameDiff, KNN e MOG2)
+*(Dica: dê Play nos dois vídeos da parte inferior e alterne entre KNN, FrameDiff e MOG2 para mostrar a máscara trabalhando)*  
+**[Fala]**  
+"Na Etapa 3 entramos no Bloco de Decisão, começando pelo primeiro paradigma: a **Seleção por Movimento**.  
+O funcionamento comum aos três métodos desta família tem três passos: fazenmos uns tratamantos nas imagens. Segundo, geramos uma máscara binária onde pixels em movimento ficam brancos e o fundo estático fica preto. Terceiro, contamos quantos pixels brancos existem dentro de cada *tile*, para saber onde se concentra o movimento: se passar do limiar mínimo, o *tile* fica verde e é enviado ao YOLO; se não passar, fica vermelho e é poupado.  
+Avaliamos três algoritmos da literatura:  
+1. **Diferença de Quadros (*FrameDiff*)**, comparando o quadro atual com 3 quadros atrás por meio de um buffer rolante, para não perder pessoas que caminham devagar;  
+2. **Subtração de Fundo por KNN (*K-Nearest Neighbors*)**: nele, o algoritmo guarda na memória uma lista com os últimos valores de cor que cada pixel teve ao longo do tempo. Quando chega um quadro novo, ele olha para cada pixel e procura quantos valores parecidos — os 'vizinhos mais próximos' — existem naquele histórico. Se o pixel mudou de cor porque uma pessoa passou na frente, ele não encontra vizinhos próximos no histórico do fundo e o pixel é marcado como movimento;  
+3. E o **MOG2**: em vez de guardar amostras soltas como o KNN, ele aprende estatisticamente quais são as cores habituais e a variação normal de cada pixel da cena. Quando um pixel assume um valor que foge totalmente dessa faixa de variação esperada para o fundo, ele é classificado como um objeto em movimento.  
+
+*(Aponte para os vídeos abaixo)* Nos vídeos aqui embaixo vemos isso na prática: à direita está a máscara binária contando os pixels brancos em tempo de execução, e à esquerda vemos que apenas os recortes onde há pedestres em movimento são enviados para o YOLO."
+
+---
+
+## Slide 8 — Etapa 3 (Paradigma 2): Árvore de *Hash Wavelet* (Reaproveitamento)
+*(Dica: alterne entre os botões "Simular Cache HIT" e "Simular Cache MISS" à direita)*  
+**[Fala]**  
+"O segundo paradigma que criamos para o Bloco de Decisão muda a lógica de seleção. Em vez de perguntar *'houve movimento neste tile?'*, o método pergunta: *'eu já vi um tile visualmente igual a este antes?'*.  
+Para cada uma das posições da grade, mantemos em memória uma **Árvore de Hashes Visuais** em múltiplas resoluções. Quando o *tile* chega, aplicamos a Transformada *Wavelet* de Haar 2D sucessivamente sobre o quadrante de baixa frequência, gerando 5 níveis de resolução — de 5×5 até 80×80 pixels — usando apenas somas inteiras e deslocamento de bits, sem precisar redimensionar a imagem.  
+Em cada nível, binarizamos os pixels pela média e percorremos a árvore comparando a assinatura pela distância de Hamming, tolerando até 1,5% de bits diferentes para absorver o ruído natural da câmera, além de controlar o tempo de validade pelo TTL.  
+*(Aponte para o simulador em Cache HIT)*  
+Quando o *tile* corresponde em todos os níveis até a folha de 80×80 e o TTL ainda é válido, ocorre um **Cache Hit**: nós não chamamos o YOLO e reaproveitamos imediatamente as caixas delimitadoras salvas naquela folha.  
+*(Clique em 'Simular Cache MISS')*  
+Quando alguém entra no *tile*, a diferença já aparece nos níveis iniciais — por exemplo, no 20×20 — gerando um **Cache Miss**: a busca na árvore é interrompida na hora, o *tile* segue para o YOLO e as novas detecções atualizam a árvore."
+
+---
+
+## Slide 9 — Etapas 4 e 5: YOLO em Lote + Consolidação por Costura (IoU + IoM)
+**[Fala]**  
+"Nas Etapas 4 e 5 concluímos o processamento do quadro.  
+Na Etapa 4, apenas os *tiles* selecionados pelo Bloco de Decisão são agrupados em um único lote (*batch*) e enviados ao YOLOv8n.  
+Na Etapa 5 entra o **Consolidador Global**, que converte as coordenadas locais de cada *tile* para a coordenada global do quadro .  
+Aqui precisamos resolver uma consequência direta da sobreposição entre *tiles*: uma mesma pessoa pode ser detectada duas vezes em *tiles* vizinhos, ou aparecer cortada na fronteira entre eles. O NMS padrão, baseado apenas em IoU (Interseção sobre União), resolve caixas de tamanhos parecidos, mas não resolve bem quando uma meia-caixa está contida dentro de uma caixa inteira.  
+Por isso, combinamos o **IoU** com o **IoM** (Interseção sobre a Menor Área) e implementamos uma **costura de borda**: quando duas caixas de *tiles* vizinhos encostam na margem do recorte, o consolidador funde as duas metades gerando a caixa completa da pessoa."
+
+---
+
+## Slide 10 — Experimentos na Prática: Comparação Visual Lado a Lado
+*(Dica: comece com "Com Grade de Tiles" no KNN, depois clique em "Hash Wavelet", e por fim mostre o botão "Vídeo Limpo (Só Pessoas)")*  
+**[Fala]**  
+"No Slide 10 temos a comparação visual lado a lado nos vídeos do conjunto VIRAT.  
+À esquerda está o **Baseline**, onde todos os 15 *tiles* ficam verdes em todos os quadros — acionando o YOLO 15 vezes por quadro sem parar, mesmo sobre o estacionamento vazio.  
+À direita temos o pipeline proposto com **KNN**: vejam que quase toda a cena permanece vermelha — ou seja, poupada da inferência — e somente os *tiles* sobre os pedestres ficam verdes.  
+*(Clique no botão 'Hash Wavelet')*  
+Alternando para o **Hash Wavelet**, a filtragem é ainda mais seletiva: a árvore dá *Cache Hit* em praticamente todo o cenário estático e aciona o YOLO em menos de 20% dos *tiles*.  
+*(Clique no botão 'Vídeo Limpo (Só Pessoas)')*  
+E quando mudamos para a visualização limpa, apenas com as caixas finais entregues pelo sistema, vemos que os pedestres continuam sendo detectados normalmente, mantendo a qualidade visual do Baseline com uma fração do custo."
+
+---
+
+## Slide 11 — Resultados Quantitativos: Tempo Economizado vs. Acurácia
+*(Dica: mostre a Sequência 1 e depois clique no botão da Sequência 2 no topo)*  
+**[Fala]**  
+"Passando para os resultados quantitativos: aqui medimos o tempo economizado por quadro e a preservação das detecções em comparação ao Baseline.  
+Na Sequência 1, com 1.871 quadros e 17.585 instâncias de pedestres:  
+- O **Baseline** levou **1.464 milissegundos por quadro** (0,68 FPS).  
+- O **KNN** cortou esse tempo pela metade, para **730 milissegundos por quadro** — sendo **2 vezes mais rápido** — mantendo **100% de precisão e 99,81% de Recall** (um F1-Score de 99,91%, deixando passar apenas 33 caixas em mais de 17 mil).  
+- Já a **Árvore de Hash Wavelet** reduziu o tempo total de 1.464 ms para **286 milissegundos por quadro** — uma economia de **80,4% no tempo**, sendo **5,11 vezes mais rápida** — enviando apenas 18,3% dos *tiles* ao YOLO e mantendo **97,05% de Recall** e **95,93% de F1-Score**.  
+
+*(Clique no botão 'Sequência 2: VIRAT_010004')*  
+Na Sequência 2, que tem pedestres que permanecem parados por mais tempo, o **KNN** novamente atinge o maior F1-Score (**91,90%** com 100% de precisão), enquanto o **Hash Wavelet** alcança uma aceleração de **8 vezes**, reduzindo o tempo para **179,9 milissegundos por quadro** e poupando 88,9% das execuções do YOLO."
+
+---
+
+## Slide 12 — Conclusões, Desafios e Próximos Passos
+**[Fala]**  
+"Para concluir: nós alcançamos o objetivo do trabalho ao pesquisar os métodos na literatura, adaptá-los e aplicá-los em um pipeline completo, comprovando que essa linha de pensamento — filtrar ou reaproveitar *tiles* antes do detector — realmente funciona e reduz muito o uso do YOLO. Ao mesmo tempo, é importante ter clareza de que o sistema, do jeito que está hoje, é uma prova de conceito experimental e ainda não está pronto para rodar direto no mundo real.  
+
+Sobre os desafios e aprendizados, dois pontos marcaram bastante o desenvolvimento:  
+Primeiro, por ser um recorte de pesquisa bem específico e recente, foi difícil encontrar artigos na literatura que trabalhassem exatamente com essa combinação de decisão por *tile* pré-modelo em câmeras fixas.  
+Segundo, nós percebemos na prática que aplicar qualquer um desses métodos de forma 'pura' simplesmente não funciona em vídeo real. Para o método principal dar certo, o pipeline precisa de vários **mecanismos auxiliares e ajustes de suporte** trabalhando juntos ao redor dele — como o filtro Gaussiano, a tolerância de distância de Hamming na árvore, o tempo de expiração e a costura de caixas nas bordas. Sem essas pequenas camadas de tratamento e estabilização, o algoritmo principal sozinho falha.  
+
+Por fim, como trabalhos futuros: como o sistema ainda não seria viável em produção por questões práticas como o FPS final e variações complexas de ambiente, esse pipeline ainda tem muito espaço para ser atualizado e aprimorado em pesquisas futuras, evoluindo essas técnicas até chegar em uma aplicação de mundo real.  
+
+Muito obrigado pela atenção, pessoal. Fico à disposição para perguntas!"

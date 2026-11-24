@@ -1,0 +1,31 @@
+IDEIAS DE REFINAMENTO PARA O MÉTODO HASH (PARA TESTAR DEPOIS)
+=============================================================
+
+Contexto do Experimento (Vídeo 2 - 1871 frames):
+- KNN (run_003): Recall 99.68% | Precision 100.00% | Pipeline 634.30 ms | Decision 30.15 ms
+- HASH (run_013): Recall 94.24% | Precision 80.70% | Pipeline 246.55 ms | Decision 6.83 ms
+- Diagnóstico: Os Falsos Positivos (4706) no HASH ocorrem porque quando um tile com pessoa dá Cache Hit (durante o ttl_positive), a caixa salva no banco fica "congelada" na posição antiga enquanto a pessoa real caminhou alguns pixels (ou saiu da borda do tile).
+
+-------------------------------------------------------------
+SOLUÇÃO 1: Micro-Hash na Caixa Detectada (Validação Local de Positivos)
+-------------------------------------------------------------
+- Quando um tile der Cache Hit e NÃO tiver pessoas salvas (tile vazio): aprova imediatamente.
+- Quando um tile der Cache Hit e TIVER pessoas salvas:
+  - Antes de devolver a caixa antiga congelada, calcula um mini-hash (ex: 8x8) apenas da área em volta do retângulo (x, y, w, h) onde a pessoa foi reconhecida.
+  - Compara com o mini-hash salvo quando o YOLO detectou aquela pessoa:
+    * Se o mini-hash continuar igual: a pessoa continua parada ali -> reaproveita a caixa sem chamar o YOLO.
+    * Se o mini-hash mudou (a pessoa andou dali): invalida o Cache Hit e manda o tile pro YOLO atualizar a posição.
+
+-------------------------------------------------------------
+SOLUÇÃO 2: Tolerância Assimétrica + Deslocamento Cinemático no Cache
+-------------------------------------------------------------
+- Aplicar tolerância normal (ex: 1.5% dos bits) quando a folha da árvore representar "Fundo Vazio" (0 pessoas), absorvendo ruído de câmera.
+- Aplicar tolerância rígida (quase 0 ou TTL muito curto de 1-2 frames) quando a folha contiver pessoas detectadas.
+- Opcionalmente, usar o vetor de velocidade (Vx, Vy) do Tracker para deslocar a caixa salva no banco a cada frame de Cache Hit.
+
+-------------------------------------------------------------
+SOLUÇÃO 3: Pipeline Híbrido (HASH + Confirmação Local de Movimento)
+-------------------------------------------------------------
+- O HASH roda primeiro (6 ms) descartando imediatamente os tiles estáticos vazios.
+- Nos tiles em que o banco indica presença de pessoa (ou dúvida), aplica-se uma checagem rápida de diferença de quadros/KNN restrita apenas àquele tile para confirmar se o alvo se moveu.
+

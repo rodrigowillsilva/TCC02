@@ -1,0 +1,336 @@
+{
+  "VIRAT_S_010203_08_000895_000975.mp4": {
+    "baseline": {
+      "label": "Baseline (15 tiles)",
+      "filter_ms": 0.0,
+      "yolo_ms": 1463.41,
+      "total_ms": 1464.07,
+      "fps": 0.68,
+      "time_reduction_percent": 0.0,
+      "speedup": 1.0,
+      "tiles_sent_percent": 100.0,
+      "cpu_avg_percent": 80.46,
+      "eval_iou_040": {
+        "iou_threshold": 0.4,
+        "frames_evaluated": 1871,
+        "gt_total": 17585,
+        "tp": 17585,
+        "fn": 0,
+        "fp": 0,
+        "recall": 100.0,
+        "precision": 100.0,
+        "f1": 100.0
+      },
+      "eval_iou_045": {
+        "iou_threshold": 0.45,
+        "frames_evaluated": 1871,
+        "gt_total": 17585,
+        "tp": 17585,
+        "fn": 0,
+        "fp": 0,
+        "recall": 100.0,
+        "precision": 100.0,
+        "f1": 100.0
+      }
+    },
+    "framediff": {
+      "label": "FrameDiff (t-3)",
+      "filter_ms": 12.86,
+      "yolo_ms": 553.6,
+      "total_ms": 562.91,
+      "fps": 1.78,
+      "time_reduction_percent": 61.55,
+      "speedup": 2.6,
+      "tiles_sent_percent": 37.38,
+      "cpu_avg_percent": 80.96,
+      "eval_iou_040": {
+        "iou_threshold": 0.4,
+        "frames_evaluated": 1871,
+        "gt_total": 17585,
+        "tp": 15785,
+        "fn": 1800,
+        "fp": 2,
+        "recall": 89.76,
+        "precision": 99.99,
+        "f1": 94.6
+      },
+      "eval_iou_045": {
+        "iou_threshold": 0.45,
+        "frames_evaluated": 1871,
+        "gt_total": 17585,
+        "tp": 15775,
+        "fn": 1810,
+        "fp": 12,
+        "recall": 89.71,
+        "precision": 99.92,
+        "f1": 94.54
+      }
+    },
+    "knn": {
+      "label": "KNN",
+      "filter_ms": 33.63,
+      "yolo_ms": 695.84,
+      "total_ms": 730.15,
+      "fps": 1.37,
+      "time_reduction_percent": 50.13,
+      "speedup": 2.01,
+      "tiles_sent_percent": 47.02,
+      "cpu_avg_percent": 80.8,
+      "eval_iou_040": {
+        "iou_threshold": 0.4,
+        "frames_evaluated": 1871,
+        "gt_total": 17585,
+        "tp": 17552,
+        "fn": 33,
+        "fp": 0,
+        "recall": 99.81,
+        "precision": 100.0,
+        "f1": 99.91
+      },
+      "eval_iou_045": {
+        "iou_threshold": 0.45,
+        "frames_evaluated": 1871,
+        "gt_total": 17585,
+        "tp": 17552,
+        "fn": 33,
+        "fp": 0,
+        "recall": 99.81,
+        "precision": 100.0,
+        "f1": 99.91
+      }
+    },
+    "mog2": {
+      "label": "MOG2",
+      "filter_ms": 40.6,
+      "yolo_ms": 438.04,
+      "total_ms": 436.3,
+      "fps": 2.29,
+      "time_reduction_percent": 70.2,
+      "speedup": 3.36,
+      "tiles_sent_percent": 26.94,
+      "cpu_avg_percent": 75.89,
+      "eval_iou_040": {
+        "iou_threshold": 0.4,
+        "frames_evaluated": 1871,
+        "gt_total": 17585,
+        "tp": 12463,
+        "fn": 5122,
+        "fp": 11,
+        "recall": 70.87,
+        "precision": 99.91,
+        "f1": 82.92
+      },
+      "eval_iou_045": {
+        "iou_threshold": 0.45,
+        "frames_evaluated": 1871,
+        "gt_total": 17585,
+        "tp": 12456,
+        "fn": 5129,
+        "fp": 18,
+        "recall": 70.83,
+        "precision": 99.86,
+        "f1": 82.88
+      }
+    },
+    "hash": {
+      "label": "Hash Wavelet",
+      "filter_ms": 11.94,
+      "yolo_ms": 301.63,
+      "total_ms": 286.3,
+      "fps": 3.49,
+      "time_reduction_percent": 80.44,
+      "speedup": 5.11,
+      "tiles_sent_percent": 18.29,
+      "cpu_avg_percent": 81.43,
+      "eval_iou_040": {
+        "iou_threshold": 0.4,
+        "frames_evaluated": 1871,
+        "gt_total": 17585,
+        "tp": 17066,
+        "fn": 519,
+        "fp": 930,
+        "recall": 97.05,
+        "precision": 94.83,
+        "f1": 95.93
+      },
+      "eval_iou_045": {
+        "iou_threshold": 0.45,
+        "frames_evaluated": 1871,
+        "gt_total": 17585,
+        "tp": 17009,
+        "fn": 576,
+        "fp": 987,
+        "recall": 96.72,
+        "precision": 94.52,
+        "f1": 95.61
+      }
+    }
+  },
+  "VIRAT_S_010004_01_000163_000188.mp4": {
+    "baseline": {
+      "label": "Baseline (15 tiles)",
+      "filter_ms": 0.0,
+      "yolo_ms": 1440.8,
+      "total_ms": 1441.23,
+      "fps": 0.69,
+      "time_reduction_percent": 0.0,
+      "speedup": 1.0,
+      "tiles_sent_percent": 100.0,
+      "cpu_avg_percent": 80.63,
+      "eval_iou_040": {
+        "iou_threshold": 0.4,
+        "frames_evaluated": 507,
+        "gt_total": 3463,
+        "tp": 3463,
+        "fn": 0,
+        "fp": 0,
+        "recall": 100.0,
+        "precision": 100.0,
+        "f1": 100.0
+      },
+      "eval_iou_045": {
+        "iou_threshold": 0.45,
+        "frames_evaluated": 507,
+        "gt_total": 3463,
+        "tp": 3463,
+        "fn": 0,
+        "fp": 0,
+        "recall": 100.0,
+        "precision": 100.0,
+        "f1": 100.0
+      }
+    },
+    "framediff": {
+      "label": "FrameDiff (t-3)",
+      "filter_ms": 11.89,
+      "yolo_ms": 835.12,
+      "total_ms": 847.44,
+      "fps": 1.18,
+      "time_reduction_percent": 41.2,
+      "speedup": 1.7,
+      "tiles_sent_percent": 57.57,
+      "cpu_avg_percent": 81.06,
+      "eval_iou_040": {
+        "iou_threshold": 0.4,
+        "frames_evaluated": 507,
+        "gt_total": 3463,
+        "tp": 2707,
+        "fn": 756,
+        "fp": 1,
+        "recall": 78.17,
+        "precision": 99.96,
+        "f1": 87.73
+      },
+      "eval_iou_045": {
+        "iou_threshold": 0.45,
+        "frames_evaluated": 507,
+        "gt_total": 3463,
+        "tp": 2707,
+        "fn": 756,
+        "fp": 1,
+        "recall": 78.17,
+        "precision": 99.96,
+        "f1": 87.73
+      }
+    },
+    "knn": {
+      "label": "KNN",
+      "filter_ms": 32.13,
+      "yolo_ms": 933.84,
+      "total_ms": 966.41,
+      "fps": 1.03,
+      "time_reduction_percent": 32.95,
+      "speedup": 1.49,
+      "tiles_sent_percent": 63.74,
+      "cpu_avg_percent": 80.53,
+      "eval_iou_040": {
+        "iou_threshold": 0.4,
+        "frames_evaluated": 507,
+        "gt_total": 3463,
+        "tp": 2944,
+        "fn": 519,
+        "fp": 0,
+        "recall": 85.01,
+        "precision": 100.0,
+        "f1": 91.9
+      },
+      "eval_iou_045": {
+        "iou_threshold": 0.45,
+        "frames_evaluated": 507,
+        "gt_total": 3463,
+        "tp": 2944,
+        "fn": 519,
+        "fp": 0,
+        "recall": 85.01,
+        "precision": 100.0,
+        "f1": 91.9
+      }
+    },
+    "mog2": {
+      "label": "MOG2",
+      "filter_ms": 39.6,
+      "yolo_ms": 499.81,
+      "total_ms": 526.73,
+      "fps": 1.9,
+      "time_reduction_percent": 63.45,
+      "speedup": 2.74,
+      "tiles_sent_percent": 33.32,
+      "cpu_avg_percent": 80.4,
+      "eval_iou_040": {
+        "iou_threshold": 0.4,
+        "frames_evaluated": 507,
+        "gt_total": 3463,
+        "tp": 1675,
+        "fn": 1788,
+        "fp": 1,
+        "recall": 48.37,
+        "precision": 99.94,
+        "f1": 65.19
+      },
+      "eval_iou_045": {
+        "iou_threshold": 0.45,
+        "frames_evaluated": 507,
+        "gt_total": 3463,
+        "tp": 1675,
+        "fn": 1788,
+        "fp": 1,
+        "recall": 48.37,
+        "precision": 99.94,
+        "f1": 65.19
+      }
+    },
+    "hash": {
+      "label": "Hash Wavelet",
+      "filter_ms": 11.08,
+      "yolo_ms": 208.02,
+      "total_ms": 179.88,
+      "fps": 5.56,
+      "time_reduction_percent": 87.52,
+      "speedup": 8.01,
+      "tiles_sent_percent": 11.05,
+      "cpu_avg_percent": 82.33,
+      "eval_iou_040": {
+        "iou_threshold": 0.4,
+        "frames_evaluated": 507,
+        "gt_total": 3463,
+        "tp": 2901,
+        "fn": 562,
+        "fp": 538,
+        "recall": 83.77,
+        "precision": 84.36,
+        "f1": 84.06
+      },
+      "eval_iou_045": {
+        "iou_threshold": 0.45,
+        "frames_evaluated": 507,
+        "gt_total": 3463,
+        "tp": 2849,
+        "fn": 614,
+        "fp": 590,
+        "recall": 82.27,
+        "precision": 82.84,
+        "f1": 82.56
+      }
+    }
+  }
+}

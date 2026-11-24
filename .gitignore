@@ -1,0 +1,31 @@
+# Pasta do Artigo (repositório separado em TCC02_article)
+ECO_artigo_TCC02/
+ECO_artigo_TCC02.zip
+
+# Ambientes virtuais e cache do Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Pesos de modelos grandes (>100MB bloqueiam o GitHub) e vídeos MP4/AVI
+*.pt
+*.onnx
+*.mp4
+*.avi
+*.mov
+videos/
+apresentacao/clips/
+
+# JSONs gigantes de execuções brutas frame-a-frame (mantemos os relatórios consolidados!)
+results/OFFICIAL_SUITE/raw/
+results/SUITE_APRESENTACAO/
+
+# Arquivos temporários do sistema / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.tmp

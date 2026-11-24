@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TCC02 — Inferência Seletiva por Tiles para Detecção de Objetos em Tempo Real</title>
+  <style>
+    :root {
+      --bg-dark: #0b1120;
+      --bg-card: #131c31;
+      --bg-card-alt: #1b2642;
+      --unifei-blue: #1d4ed8;
+      --accent-cyan: #38bdf8;
+      --accent-green: #22c55e;
+      --accent-red: #ef4444;
+      --accent-amber: #f59e0b;
+      --accent-purple: #a855f7;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border-color: rgba(148, 163, 184, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+
+    /* Top Header / Progress */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      background: rgba(11, 17, 32, 0.9);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+      color: var(--accent-cyan);
+    }
+
+    .brand span.sub {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .slide-counter {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .progress-track {
+      position: fixed;
+      top: 48px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.06);
+      z-index: 101;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--unifei-blue), var(--accent-cyan), var(--accent-green));
+      width: 8.33%;
+      transition: width 0.3s ease;
+    }
+
+    /* Slide Container */
+    .deck {
+      position: relative;
+      width: 100vw;
+      height: calc(100vh - 48px);
+      margin-top: 48px;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 36px 64px 64px 64px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(24px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      overflow-y: auto;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+
+    /* Typography */
+    .kicker {
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin-bottom: 6px;
+    }
+
+    h1 {
+      font-size: 2.7rem;
+      line-height: 1.18;
+      font-weight: 800;
+      margin-bottom: 18px;
+    }
+
+    h2 {
+      font-size: 1.95rem;
+      line-height: 1.25;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    h3 {
+      font-size: 1.18rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #e2e8f0;
+    }
+
+    p,
+    li {
+      font-size: 1.04rem;
+      line-height: 1.55;
+      color: #cbd5e1;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    strong {
+      color: #ffffff;
+    }
+
+    .highlight-cyan {
+      color: var(--accent-cyan);
+      font-weight: 700;
+    }
+
+    .highlight-green {
+      color: var(--accent-green);
+      font-weight: 700;
+    }
+
+    .highlight-red {
+      color: var(--accent-red);
+      font-weight: 700;
+    }
+
+    .highlight-amber {
+      color: var(--accent-amber);
+      font-weight: 700;
+    }
+
+    /* Layout Grids & Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      flex: 1;
+      align-items: stretch;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      flex: 1;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    }
+
+    .card.accent-border-cyan {
+      border-left: 4px solid var(--accent-cyan);
+    }
+
+    .card.accent-border-green {
+      border-left: 4px solid var(--accent-green);
+    }
+
+    .card.accent-border-red {
+      border-left: 4px solid var(--accent-red);
+    }
+
+    .card.accent-border-amber {
+      border-left: 4px solid var(--accent-amber);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      width: fit-content;
+    }
+
+    .badge-cyan {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+
+    .badge-green {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(34, 197, 94, 0.35);
+    }
+
+    .badge-red {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-red);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+
+    .badge-amber {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-amber);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+
+    /* Interactive Controls / Buttons */
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .btn {
+      background: var(--bg-card-alt);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.12);
+    }
+
+    .btn.active {
+      background: var(--unifei-blue);
+      border-color: var(--accent-cyan);
+      color: #fff;
+    }
+
+    /* Pipeline Flow Boxes */
+    .pipeline-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+
+    .stage-node {
+      flex: 1;
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px 12px;
+      text-align: center;
+      transition: all 0.25s;
+    }
+
+    .stage-node.highlight {
+      border: 2px solid var(--accent-cyan);
+      background: rgba(29, 78, 216, 0.25);
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.2);
+    }
+
+    .stage-node .title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .stage-node .desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .arrow {
+      font-size: 1.3rem;
+      color: var(--accent-cyan);
+      font-weight: bold;
+    }
+
+    /* Tiling Visualizer */
+    .frame-canvas {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: radial-gradient(circle at 60% 40%, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #475569;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .tile-cell {
+      position: absolute;
+      border: 1.5px solid rgba(56, 189, 248, 0.65);
+      background: rgba(56, 189, 248, 0.06);
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      padding: 4px 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.75);
+      transition: all 0.3s ease;
+    }
+
+    .tile-cell.active-green {
+      border: 2px solid var(--accent-green);
+      background: rgba(34, 197, 94, 0.22);
+      color: #fff;
+      z-index: 5;
+    }
+
+    .tile-cell.skip-red {
+      border: 1px dashed rgba(239, 68, 68, 0.55);
+      background: rgba(239, 68, 68, 0.07);
+      color: rgba(248, 113, 113, 0.7);
+    }
+
+    .tile-cell.cache-cyan {
+      border: 2px solid var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.22);
+      color: #fff;
+      z-index: 4;
+    }
+
+    /* Video / Media Placeholders */
+    .video-slot {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #070b14;
+      border: 2px dashed rgba(56, 189, 248, 0.4);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .video-slot video,
+    .video-slot img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Formula / Code Box */
+    .code-box {
+      font-family: 'Consolas', 'Courier New', monospace;
+      background: #090d16;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      color: #e2e8f0;
+      overflow-x: auto;
+    }
+
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+      position: fixed;
+      bottom: 16px;
+      right: 32px;
+      display: flex;
+      gap: 8px;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      background: rgba(19, 28, 49, 0.85);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-btn:hover {
+      border-color: var(--accent-cyan);
+      background: var(--unifei-blue);
+    }
+
+    /* Bar Chart Styles */
+    .bar-row {
+      margin-bottom: 14px;
+    }
+
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 14px;
+      background: rgba(255, 255, 255, 0.07);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.6s ease;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="brand">
+      <span>UNIFEI • ENGENHARIA DE COMPUTAÇÃO</span>
+      <span class="sub">| TCC02 — Rodrigo William da Silva</span>
+    </div>
+    <div class="slide-counter" id="slideCounter">Slide 1 / 12</div>
+  </header>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- Slides Deck -->
+  <main class="deck" id="deck">
+
+    <!-- =========================================================
+         SLIDE 1: CAPA
+         ========================================================= -->
+    <section class="slide active" style="justify-content: center;">
+      <div style="max-width: 960px;">
+        <span class="badge badge-cyan" style="margin-bottom: 16px;">Trabalho de Conclusão de Curso (TCC02)</span>
+        <h1>Estratégias de Inferência Seletiva Baseada em <span class="highlight-cyan">Tiles</span> para Aceleração da
+          Detecção de Objetos em Dispositivos de Borda</h1>
+        <p style="font-size: 1.22rem; color: var(--text-muted); margin-bottom: 36px; max-width: 820px;">
+          Tornando viável o uso de redes neurais modernas em videovigilância ao detectar objetos pequenos e eliminar
+          inferências redundantes.
+        </p>
+
+        <div class="grid-3" style="flex: 0; max-width: 820px;">
+          <div class="card accent-border-cyan">
+            <span class="kicker">Autor</span>
+            <h3>Rodrigo William da Silva</h3>
+            <p style="font-size: 0.9rem;">Engenharia de Computação — UNIFEI</p>
+          </div>
+          <div class="card">
+            <span class="kicker">Orientador</span>
+            <h3>Prof. Enzo Seraphim</h3>
+            <p style="font-size: 0.9rem;">Instituto de Engenharia de Sistemas e Tecnologia da Informação</p>
+          </div>
+          <div class="card">
+            <span class="kicker">Coorientadora</span>
+            <h3>Profa. Thatiana Seraphim</h3>
+            <p style="font-size: 0.9rem;">Universidade Federal de Itajubá</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SLIDE 2: INTRODUÇÃO E O PROBLEMA DO FRAME INTEIRO
+         ========================================================= -->
+    <section class="slide">
+      <div class="kicker">1. Introdução e Motivação</div>
+      <h2>Por que Câmeras de Segurança Reais Ainda Quase Não Usam IA?</h2>
+
+      <div class="grid-2">
+        <div class="card accent-border-red">
+          <span class="badge badge-red">A Transição para IA na Borda</span>
+          <h3>Do Alarme Clássico para Detectores Neurais (YOLO)</h3>
+          <ul>
+            <li>No mundo real hoje, câmeras de segurança usam algoritmos clássicos simples (diferença de luz/movimento),
+              que sofrem com falsos alarmes — <strong>não IA</strong>, pois rodar redes neurais continuamente é caro
+              demais.</li>
+            <li>Estamos chegando no ponto em que modelos leves (como <strong>YOLO</strong>) começam a ser viáveis na
+              borda, mas a inferência ainda é o maior gargalo.</li>
+            <li><strong>E se passarmos o quadro inteiro direto no YOLO?</strong> A entrada nativa da rede é pequena
+              (<code>640×640</code> pixels).</li>
+          </ul>
+          <div class="code-box" style="margin-top: auto;">
+            Quadro 1280×720 (ou 4K) ──[Redimensiona]──► 640×640 ──► YOLO
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="badge badge-amber">O Problema da Abordagem Direta</span>
+          <h3>O que acontece ao jogar o quadro inteiro no YOLO?</h3>
+          <p>Para caber na entrada única de <code>640×640</code> do YOLO, o quadro todo sofre redução de escala. Um
+            pedestre distante perde quase todos os seus pixels e deixa de ser detectado:</p>
+
+          <!-- Ilustração Visual de Perda no Resize -->
+          <div
+            style="display: flex; align-items: center; justify-content: space-around; background: #090e1a; padding: 18px; border-radius: 12px; border: 1px solid var(--border-color); margin-top: 8px; flex: 1;">
+            <div style="text-align: center;">
+              <div
+                style="width: 190px; height: 115px; border: 2px solid var(--accent-cyan); border-radius: 6px; position: relative; background: #162238; display: flex; align-items: center; justify-content: center;">
+                <span
+                  style="font-size: 0.75rem; position: absolute; top: 4px; left: 6px; color: var(--accent-cyan);">Frame
+                  Original (Alta Res.)</span>
+                <div
+                  style="width: 18px; height: 38px; border: 2px solid var(--accent-green); background: rgba(34,197,94,0.25); position: relative;">
+                  <span
+                    style="font-size: 0.65rem; position: absolute; top: -16px; left: -12px; color: var(--accent-green); white-space: nowrap;">Pessoa
+                    nítida</span>
+                </div>
+              </div>
+              <p style="font-size: 0.82rem; margin-top: 6px;">Detecção possível</p>
+            </div>
+
+            <div class="arrow">──►</div>
+
+            <div style="text-align: center;">
+              <div
+                style="width: 115px; height: 115px; border: 2px solid var(--accent-red); border-radius: 6px; position: relative; background: #1f1624; display: flex; align-items: center; justify-content: center;">
+                <span
+                  style="font-size: 0.7rem; position: absolute; top: 4px; left: 6px; color: var(--accent-red);">Resize
+                  640×640</span>
+                <div style="width: 5px; height: 10px; background: var(--accent-red);"></div>
+              </div>
+              <p style="font-size: 0.82rem; margin-top: 6px; color: var(--accent-red);"><strong>Falso Negativo!</strong>
+                (Perdeu o alvo)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SLIDE 3: TILING RESOLVE A QUALIDADE, MAS EXPLODE O CUSTO
+         ========================================================= -->
+    <section class="slide">
+      <div class="kicker">1. Introdução e Motivação (Cont.)</div>
+      <h2>Dividir em <em>Tiles</em> Salva a Precisão, mas Explode o Custo!</h2>
+
+      <div class="grid-2">
+        <div class="card accent-border-green">
+          <span class="badge badge-green">Solução para Objetos Pequenos</span>
+          <h3>Fatiamento do Quadro (Tiling / SAHI)</h3>
+          <ul>
+            <li>Para resolver a perda de qualidade no redimensionamento, <strong>dividimos o quadro em recortes
+                menores</strong> (<em>tiles</em> de <code>640×640</code> por exemplo).</li>
+            <li>Cada <em>tile</em> entra no YOLO preservando os detalhes — as pessoas distantes continuam grandes e
+              nítidas!</li>
+          </ul>
+          <div class="card"
+            style="background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.35); margin-top: auto;">
+            <h3 style="color: var(--accent-red);">O Novo Problema: Explosão de Inferências</h3>
+            <p style="font-size: 0.95rem;">
+              Um frame de video agora em media se torna dezenas, multiplicando aind mais o custo de inferência.
+            </p>
+          </div>
+        </div>
+
+        <div class="card accent-border-cyan">
+          <span class="badge badge-cyan">O ponto Central do TCC</span>
+          <h3>Em uma câmera fixa, precisamos processar tudo?</h3>
+          <p>Olhe para uma câmera de segurança típica: em qualquer instante, <strong>grande parte dos <em>tiles</em> são
+              apenas asfalto, grama e paredes paradas</strong>.</p>
+          <div
+            style="background: #090e1a; border-radius: 10px; padding: 16px; border: 1px solid var(--border-color); margin-top: 6px;">
+            <p style="font-size: 1.05rem; color: #fff; font-weight: 600; margin-bottom: 8px;">
+              Pergunta de Pesquisa:
+            </p>
+            <p style="font-size: 0.98rem; color: var(--accent-cyan);">
+              <em>"Como reduzir o uso do YOLO filtrando ou reaproveitando recortes redundantes de forma leve, acionando
+                a rede neural apenas onde há informação nova?"</em>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SLIDE 4: OBJETIVOS E TRABALHOS CORRELACIONADOS
+         ========================================================= -->
+    <section class="slide">
+      <div class="kicker">2. Objetivos & Trabalhos Correlacionados</div>
+      <h2>Onde Nos Apoiamos e Qual é a Nossa Proposta</h2>
+
+      <div class="grid-3" style="margin-bottom: 20px; flex: 0;">
+        <div class="card">
+          <span class="badge badge-cyan">Literatura: Fatiamento</span>
+          <h3>SAHI (Akyon et al., 2022)</h3>
+          <p style="font-size: 0.92rem;">Formaliza a inferência fatiada em <em>tiles</em> sobrepostos para achar objetos
+            pequenos sem retreinar a rede. <strong>Limitação:</strong> infere todos os <em>tiles</em> sempre.</p>
+        </div>
+        <div class="card">
+          <span class="badge badge-cyan">Literatura: Filtro Pré-Modelo</span>
+          <h3>NoScope & Reducto</h3>
+          <p style="font-size: 0.92rem;">Descartam imagens redundantes usando diferença de pixels/bordas antes da rede.
+            <strong>Limitação:</strong> decidem pelo <em>quadro inteiro</em> (se 1 folha mexer, processa a tela toda).
+          </p>
+        </div>
+        <div class="card">
+          <span class="badge badge-cyan">Literatura: Seleção de Tiles</span>
+          <h3>Plastiras et al. (2018)</h3>
+          <p style="font-size: 0.92rem;">Processam apenas alguns <em>tiles</em> por vez com memória temporal, mas focado
+            em câmeras móveis de drones (UAVs).</p>
+        </div>
+      </div>
+
+      <div class="card accent-border-green" style="flex: 1; justify-content: center;">
+        <span class="badge badge-green">Nossa Proposta no TCC02</span>
+        <h3>Inferência Seletiva por <em>Tiles</em> com Detector Caixa-Preta</h3>
+        <div class="grid-2" style="align-items: center;">
+          <ul>
+            <li><strong>YOLO como Caixa-Preta:</strong> Não alteramos pesos nem retreinamos o modelo — atuamos 100% no
+              fluxo de dados que chega até ele.</li>
+            <li><strong>Granularidade Espacial + Temporal:</strong> Decisão individual por <em>tile</em> aproveitando o
+              fundo fixo de câmeras estáticas.</li>
+          </ul>
+          <ul>
+            <li><strong>Módulo de Decisão:</strong> Testamos e comparamos dois paradigmas distintos:
+              <strong>Seleção por Movimento</strong> (FrameDiff, KNN, MOG2) vs. <strong>Reaproveitamento por Árvore de
+                Hash Wavelet</strong>.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SLIDE 5: VISÃO GERAL DO PIPELINE (FLUXO REFERÊNCIA VS PROPOSTO)
+         ========================================================= -->
+    <section class="slide">
+      <div class="kicker">3. Arquitetura do Sistema</div>
+      <h2>Fluxo de Referência (Baseline) vs. Pipeline Proposto</h2>
+
+      <!-- Baseline Row -->
+      <div
+        style="margin-bottom: 6px; font-size: 0.85rem; font-weight: 700; color: var(--accent-red); text-transform: uppercase;">
+        (a) Pipeline de Referência (Baseline) — Custo Máximo Fixo (MxN tiles/quadro)
+      </div>
+      <div class="pipeline-row">
+        <div class="stage-node">
+          <div class="title">1. Quadro</div>
+          <div class="desc">Quadro completo</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="stage-node">
+          <div class="title">2. Tiler (M×N)</div>
+          <div class="desc">Gera MxN tiles (640×640)</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="stage-node" style="border-color: var(--accent-red);">
+          <div class="title" style="color: var(--accent-red);">4. YOLOv8n Completo</div>
+          <div class="desc">Infere TODOS os MxN tiles</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="stage-node">
+          <div class="title">5. Consolidador</div>
+          <div class="desc">Fusão Global (IoU + IoM)</div>
+        </div>
+      </div>
+
+      <!-- Proposed Row -->
+      <div
+        style="margin-bottom: 6px; margin-top: 10px; font-size: 0.85rem; font-weight: 700; color: var(--accent-green); text-transform: uppercase;">
+        (b) Pipeline Proposto — Inferência Seletiva + Reaproveitamento de Cache
+      </div>
+      <div class="pipeline-row">
+        <div class="stage-node" onclick="explainStage(1)" style="cursor:pointer;">
+          <div class="title">1. Quadro</div>
+          <div class="desc">Quadro completo</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="stage-node" onclick="explainStage(2)" style="cursor:pointer;">
+          <div class="title">2. Tiler (MxN)</div>
+          <div class="desc">Overlap automático</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="stage-node highlight" onclick="explainStage(3)" style="cursor:pointer;">
+          <div class="title" style="color: var(--accent-cyan);">3. Bloco de Decisão</div>
+          <div class="desc">Filtra (S) ou Reaproveita (C)</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="stage-node" onclick="explainStage(4)" style="cursor:pointer; border-color: var(--accent-green);">
+          <div class="title" style="color: var(--accent-green);">4. YOLO em Lote</div>
+          <div class="desc">Roda SÓ nos selecionados (S)</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="stage-node" onclick="explainStage(5)" style="cursor:pointer;">
+          <div class="title">5. Consolidador</div>
+          <div class="desc">Une (R ∪ C) com IoU/IoM</div>
+        </div>
+      </div>
+
+      <div class="card accent-border-cyan" id="stageExplanation" style="margin-top: auto;">
+        <h3>Bloco de Decisão</h3>
+        <p>Recebe os MxN <em>tiles</em> do quadro atual e decide em poucos milissegundos quais precisam ir para o YOLO
+          (<strong>S</strong>) e quais podem ser descartados ou ter suas detecções resgatadas da memória
+          (<strong>C</strong>).</p>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SLIDE 6: ETAPAS 1 E 2 — FRAME, RESOLUÇÃO E DIVISÃO EM TILES
+         ========================================================= -->
+    <section class="slide">
+      <div class="kicker">4. Etapas 1 e 2 do Pipeline</div>
+      <h2>Quadro e Divisão em <em>Tiles</em> com Overlap </h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="btn-group">
+            <button class="btn active" id="btnOverlapOn" onclick="toggleOverlapView(true)">Com Overlap(Grade
+              M×N)</button>
+            <button class="btn" id="btnOverlapOff" onclick="toggleOverlapView(false)">Por que precisamos de
+              Overlap?</button>
+          </div>
+
+          <!-- Simulador Visual da Grade -->
+          <div class="frame-canvas" id="tilerCanvas">
+            <!-- Preenchido via JS -->
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); text-align: center;" id="tilerCaption">
+            Com Overlap Automático: as faixas de sobreposição garantem que o pedestre na fronteira apareça inteiro nos
+            tiles adjacentes.
+          </p>
+        </div>
+
+        <div class="card accent-border-cyan">
+          <span class="badge badge-cyan">Matemática do Tiler</span>
+          <h3>Distribuição Uniforme</h3>
+          <ul>
+            <li>Dado qualquer quadro de dimensões <strong>W × H</strong>, definimos uma grade de <strong>M colunas × N
+                linhas</strong> com <em>tiles</em> de tamanho <strong>w × h</strong>.</li>
+            <li>O <em>overlap</em> não é fixado manualmente: distribuímos as coordenadas iniciais <em>(x<sub>i</sub>,
+                y<sub>j</sub>)</em> de forma equidistante (via <code>linspace</code>) até a borda final do quadro:</li>
+          </ul>
+          <div class="code-box">
+            x_i = floor( i · (W − w) / (C − 1) ) &nbsp;→&nbsp; Overlap_x = w − (W − w) / (C − 1)<br />
+            y_j = floor( j · (H − h) / (L − 1) ) &nbsp;→&nbsp; Overlap_y = h − (H − h) / (L − 1)
+          </div>
+          <p style="font-size: 0.94rem; margin-top: 6px;">
+            <strong>Por que isso é vital?</strong> Sem essa faixa de sobreposição calculada automaticamente, um objeto
+            posicionado sobre a linha divisória seria cortado ao meio entre dois <em>tiles</em> e o detector falharia em
+            ambas as metades!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SLIDE 7: ETAPA 3 (PARTE A) — DECISÃO POR MOVIMENTO
+         ========================================================= -->
+    <section class="slide">
+      <div class="kicker">5. Etapa 3 — Bloco de Decisão (Paradigma 1)</div>
+      <h2 style="margin-bottom: 12px;">Seleção por Movimento: FrameDiff, KNN e MOG2</h2>
+
+      <!-- Parte Superior: Explicação Textual + 3 Métodos -->
+      <div class="grid-2" style="flex: 0; margin-bottom: 14px; gap: 18px;">
+        <div class="card accent-border-green" style="padding: 14px 18px; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="badge badge-green">Princípio Comum</span>
+            <span
+              style="font-family: monospace; font-size: 0.85rem; color: var(--accent-cyan); background: #090d16; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border-color);">
+              Tile Ativo ⇔ ∑ M_t(x, y) &gt; s² · p_min
+            </span>
+          </div>
+          <ol style="padding-left: 18px; font-size: 0.92rem; line-height: 1.45; color: #cbd5e1;">
+            <li>Reduz a escala (<code>0.75x</code>), converte para cinza e aplica filtro Gaussiano (remove ruído MP4).
+            </li>
+            <li>Calcula a <strong>máscara binária de primeiro plano</strong> <em>M<sub>t</sub>(x, y)</em>.</li>
+            <li>Conta os pixels brancos dentro de cada <em>tile</em>: só envia ao YOLO se passar de
+              <em>p<sub>min</sub></em> (ex.: 150 px).
+            </li>
+          </ol>
+        </div>
+
+        <div class="card" style="padding: 12px 16px; gap: 6px; justify-content: center;">
+          <div style="background: var(--bg-card-alt); padding: 7px 12px; border-radius: 6px; font-size: 0.88rem;">
+            <strong style="color: var(--accent-cyan);">1. FrameDiff (t − 3):</strong> Subtrai os pixels do quadro atual
+            em relação a 3 quadros atrás para detectar deslocamento direto.
+          </div>
+          <div style="background: var(--bg-card-alt); padding: 7px 12px; border-radius: 6px; font-size: 0.88rem;">
+            <strong style="color: var(--accent-green);">2. KNN (Vizinhos Mais Próximos):</strong> Guarda amostras
+            recentes de cada pixel; se o novo valor não tiver vizinhos próximos no histórico, é classificado como
+            movimento.
+          </div>
+          <div style="background: var(--bg-card-alt); padding: 7px 12px; border-radius: 6px; font-size: 0.88rem;">
+            <strong style="color: var(--accent-amber);">3. MOG2:</strong> Modela o fundo calculando a média e a variação
+            de cor habituais de cada pixel ao longo do tempo, isolando o que foge desse padrão.
+          </div>
+        </div>
+      </div>
+
+      <!-- Parte Inferior: Vídeo Original vs Máscara P&B Lado a Lado (Menor) -->
+      <div class="card" style="flex: 1; padding: 12px 18px; gap: 8px; min-height: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="badge badge-cyan">Visualização</span>
+            <span style="font-size: 0.9rem; font-weight: 600; color: #e2e8f0;">Vídeo com Grade de Tiles vs. Máscara
+              Binária de Movimento</span>
+          </div>
+          <div class="btn-group" style="margin-bottom: 0;">
+            <button class="btn active" style="padding: 4px 10px; font-size: 0.8rem;" id="btnMask-knn"
+              onclick="selectMaskMethod('knn')">KNN</button>
+            <button class="btn" style="padding: 4px 10px; font-size: 0.8rem;" id="btnMask-framediff"
+              onclick="selectMaskMethod('framediff')">FrameDiff</button>
+            <button class="btn" style="padding: 4px 10px; font-size: 0.8rem;" id="btnMask-mog2"
+              onclick="selectMaskMethod('mog2')">MOG2</button>
+            <button class="btn" style="padding: 4px 10px; font-size: 0.8rem;" onclick="syncMaskVideos('play')">▶
+              Play</button>
+            <button class="btn" style="padding: 4px 10px; font-size: 0.8rem;" onclick="syncMaskVideos('pause')">⏸
+              Pause</button>
+          </div>
+        </div>
+
+        <div class="grid-2" style="gap: 16px; flex: 1; min-height: 0; align-items: stretch;">
+          <!-- Esquerda: Vídeo Original / Tiles -->
+          <div class="video-slot"
+            style="aspect-ratio: 16 / 9; height: 100%; width: auto; max-width: 100%; margin: 0 auto; padding: 0;">
+            <video id="vidMaskOrig" class="mask-video" src="clips/knn_grid.mp4" loop muted playsinline
+              style="display:none; width:100%; height:100%; object-fit:cover;"
+              onloadeddata="this.style.display='block'; document.getElementById('phMaskOrig').style.display='none';"
+              onerror="this.style.display='none'; document.getElementById('phMaskOrig').style.display='block';"></video>
+            <div id="phMaskOrig" style="padding: 12px;">
+              <p style="font-size: 0.98rem; font-weight: 700; color: var(--accent-green); margin-bottom: 4px;">
+                Vídeo + Tiles: <code id="codeMaskOrig">clips/knn_grid.mp4</code>
+              </p>
+              <p style="font-size: 0.82rem; color: var(--text-muted);">
+                Quadro original mostrando os tiles ativados (verdes) e ignorados (vermelhos).
+              </p>
+            </div>
+          </div>
+
+          <!-- Direita: Máscara P&B -->
+          <div class="video-slot"
+            style="aspect-ratio: 16 / 9; height: 100%; width: auto; max-width: 100%; margin: 0 auto; padding: 0;">
+            <video id="vidMaskBW" class="mask-video" src="clips/knn_mask.mp4" loop muted playsinline
+              style="display:none; width:100%; height:100%; object-fit:cover;"
+              onloadeddata="this.style.display='block'; document.getElementById('phMaskBW').style.display='none';"
+              onerror="this.style.display='none'; document.getElementById('phMaskBW').style.display='block';"></video>
+            <div id="phMaskBW" style="padding: 12px;">
+              <p style="font-size: 0.98rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 4px;">
+                Máscara P&amp;B: <code id="codeMaskBW">clips/knn_mask.mp4</code>
+              </p>
+              <p style="font-size: 0.82rem; color: var(--text-muted);">
+                Máscara binária <em>M<sub>t</sub>(x,y)</em> com a contagem de pixels brancos em cada tile ativo.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SLIDE 8: ETAPA 3 (PARTE B) — ÁRVORE DE HASH WAVELET
+         ========================================================= -->
+    <section class="slide">
+      <div class="kicker">6. Etapa 3 — Bloco de Decisão (Paradigma 2 — Autoral)</div>
+      <h2>Reaproveitamento de Detecções por Árvore de <em>Hash Wavelet</em></h2>
+
+      <div class="grid-2">
+        <div class="card accent-border-cyan">
+          <span class="badge badge-cyan">Mudança de Paradigma</span>
+          <h3>Em vez de caçar movimento, lembrar do que já viu!</h3>
+          <ul>
+            <li>Para cada posição de <em>tile</em>, criamos uma <strong>Árvore de Hashes Visuais</strong> na memória
+              RAM.</li>
+            <li>Aplicamos a <strong>Transformada Wavelet de Haar 2D</strong> sucessivamente no quadrante
+              <code>LL</code>, gerando 5 níveis de resolução:
+              <code>5×5 → 10×10 → 20×20 → 40×40 → 80×80</code>.
+            </li>
+            <li>Cada nível vira uma assinatura binária (bits acima/abaixo da média).</li>
+            <li><strong>Tolerância a Ruído:</strong> Aceita até <strong>&epsilon; = 1,5%</strong> de bits diferentes
+              (Distância de Hamming) em cada nível para absorver chiado da câmera.</li>
+            <li><strong>Validade Temporal (TTL):</strong> Hashes vazios (<strong>&tau;<sub>0</sub></strong>) e com
+              pessoas (<strong>&tau;<sub>+</sub></strong>) têm tempo de expiração próprio.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="badge badge-green">Simulador da Árvore</span>
+            <div class="btn-group" style="margin: 0;">
+              <button class="btn active" id="btnHashHit" onclick="setHashMode('hit')">Simular Cache HIT (Pula
+                YOLO)</button>
+              <button class="btn" id="btnHashMiss" onclick="setHashMode('miss')">Simular Cache MISS (Chama
+                YOLO)</button>
+            </div>
+          </div>
+
+          <div id="hashTreeBox"
+            style="display: flex; flex-direction: column; gap: 10px; justify-content: center; flex: 1; background: #090e1a; padding: 18px; border-radius: 12px; border: 1px solid var(--border-color);">
+            <!-- Renderizado via JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SLIDE 9: ETAPAS 4 E 5 — YOLO EM LOTE + CONSOLIDAÇÃO (COSTURA)
+         ========================================================= -->
+    <section class="slide">
+      <div class="kicker">7. Etapas 4 e 5 do Pipeline</div>
+      <h2>Inferência em Lote (Batch) e Consolidação por Costura (IoU + IoM)</h2>
+
+      <div class="grid-2">
+        <div class="card accent-border-green">
+          <span class="badge badge-green">Etapa 4: YOLO Seletivo</span>
+          <h3>Inferência Agrupada em Lote (Batch)</h3>
+          <ul>
+            <li>Apenas os <em>tiles</em> selecionados (<strong>S</strong>) são empacotados em um único lote e enviados
+              ao <strong>YOLO</strong> (classe <code>person</code>, confiança &ge; 0,25).</li>
+            <li>Cada <em>tile</em> selecionado retorna suas caixas em coordenadas locais (<code>0 &hellip; M</code>)
+              e, se o modo <em>Hash</em> estiver ativo, já salva o resultado na folha da árvore!</li>
+          </ul>
+
+          <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 8px 0;" />
+
+          <span class="badge badge-cyan">Etapa 5: Consolidador Global</span>
+          <h3>Por que o NMS comum (só IoU) não basta em Tiles?</h3>
+          <ul>
+            <li>Somamos a âncora <em>(x<sub>k</sub>, y<sub>k</sub>)</em> do <em>tile</em> para jogar as caixas no
+              quadro.
+            </li>
+            <li>Nas faixas de <em>overlap</em>, uma mesma pessoa aparece 2 vezes — ou aparece <strong>metade num tile e
+                inteira no vizinho</strong>!</li>
+          </ul>
+        </div>
+
+        <div class="card accent-border-amber">
+          <span class="badge badge-amber">Solução: IoU + IoM + Costura de Borda</span>
+          <h3>Unificando Pessoas Divididas entre Dois Tiles</h3>
+          <div class="code-box">
+            IoU = Interseção / União (caixas parecidas)<br />
+            IoM = Interseção / Menor Área (meia-caixa dentro de caixa inteira!)
+          </div>
+          <p style="font-size: 0.94rem;">
+            Além disso, nosso consolidador detecta se duas caixas de <em>tiles</em> vizinhos <strong>encostam na borda
+              do recorte</strong> (margem de 8 px) e faz a <strong>costura (envelope)</strong> das duas metades:
+          </p>
+
+          <!-- Ilustração Visual da Costura -->
+          <div
+            style="display: flex; align-items: center; justify-content: space-around; background: #090e1a; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color); margin-top: 10px;">
+            <div style="text-align: center;">
+              <div
+                style="width: 150px; height: 105px; position: relative; background: #131c31; border: 1px solid #334155; border-radius: 6px;">
+                <div
+                  style="position: absolute; left: 52px; top: 12px; width: 44px; height: 42px; border: 2px dashed var(--accent-amber);">
+                </div>
+                <div
+                  style="position: absolute; left: 52px; top: 44px; width: 44px; height: 48px; border: 2px dashed var(--accent-cyan);">
+                </div>
+              </div>
+              <span style="font-size: 0.82rem; color: var(--text-muted); display: block; margin-top: 6px;">2 metades na
+                fronteira</span>
+            </div>
+            <div class="arrow">──►</div>
+            <div style="text-align: center;">
+              <div
+                style="width: 150px; height: 105px; position: relative; background: #131c31; border: 1px solid #334155; border-radius: 6px;">
+                <div
+                  style="position: absolute; left: 52px; top: 12px; width: 44px; height: 80px; border: 2px solid var(--accent-green); background: rgba(34,197,94,0.2);">
+                </div>
+              </div>
+              <span
+                style="font-size: 0.82rem; color: var(--accent-green); font-weight: 700; display: block; margin-top: 6px;">1
+                Caixa Costurada!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SLIDE 10: EXPERIMENTOS — VÍDEOS LADO A LADO COM SELETORES
+         ========================================================= -->
+    <section class="slide">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
+        <div>
+          <div class="kicker">8. Experimentos na Base VIRAT</div>
+          <h2 style="margin-bottom: 0;">Comparação Visual: Baseline vs. Inferência Seletiva</h2>
+        </div>
+
+        <!-- Controles de Reprodução -->
+        <div class="btn-group" style="margin-bottom: 0;">
+          <button class="btn active" onclick="syncVideos('play')">▶ Play</button>
+          <button class="btn" onclick="syncVideos('pause')">⏸ Pause</button>
+          <button class="btn" onclick="syncVideos('restart')">↺ Reiniciar</button>
+        </div>
+      </div>
+
+      <!-- Barra de Controle: Escolha do Método e Exibição da Grade (Verde/Vermelho) -->
+      <div
+        style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px 16px; margin-bottom: 14px; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span
+            style="font-size: 0.85rem; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase;">Método à
+            Direita:</span>
+          <button class="btn active" id="btnMethod-knn" onclick="selectExperimentMethod('knn')">KNN (Subtração de
+            Fundo)</button>
+          <button class="btn" id="btnMethod-hash" onclick="selectExperimentMethod('hash')">Hash Wavelet
+            (Árvore)</button>
+          <button class="btn" id="btnMethod-framediff" onclick="selectExperimentMethod('framediff')">FrameDiff</button>
+          <button class="btn" id="btnMethod-mog2" onclick="selectExperimentMethod('mog2')">MOG2</button>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span
+            style="font-size: 0.85rem; font-weight: 700; color: var(--accent-amber); text-transform: uppercase;">Visualização:</span>
+          <button class="btn active" id="btnGrid-on" onclick="toggleExperimentGrid(true)">🟩🟥 Com Grade de
+            Tiles</button>
+          <button class="btn" id="btnGrid-off" onclick="toggleExperimentGrid(false)">Sem Grade</button>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Vídeo Esquerda: Baseline -->
+        <div class="card accent-border-red">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="badge badge-red">Baseline (Sem Filtro)</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);" id="baselineSubtitle">15 / 15 tiles verdes todo
+              frame (1.464 ms/frame • 0,68 FPS)</span>
+          </div>
+          <div class="video-slot" style="flex: 1;">
+            <video id="videoBaseline" class="compare-video" src="clips/baseline_grid.mp4" loop muted playsinline
+              style="display:none;"
+              onloadeddata="this.style.display='block'; document.getElementById('placeholderBaseline').style.display='none';"
+              onerror="this.style.display='none'; document.getElementById('placeholderBaseline').style.display='block';"></video>
+            <div id="placeholderBaseline">
+              <p style="font-size: 1.12rem; font-weight: 700; color: var(--accent-red); margin-bottom: 6px;">
+                🎬 Clipe Baseline: <code id="codeBaselineFile">clips/baseline_grid.mp4</code>
+              </p>
+              <p style="font-size: 0.9rem; color: var(--text-muted);" id="descBaseline">
+                Todos os 15 quadrados verdes ativos o tempo inteiro, executando o YOLO até no estacionamento vazio.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vídeo Direita: Método Selecionado -->
+        <div class="card accent-border-green">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="badge badge-green" id="methodBadge">Pipeline Proposto: KNN</span>
+            <span style="font-size: 0.85rem; color: var(--accent-green);" id="methodSubtitle">730 ms/frame (2,01x mais
+              rápido • Recall: 99,81% | F1: 99,91%)</span>
+          </div>
+          <div class="video-slot" style="flex: 1;">
+            <video id="videoProposed" class="compare-video" src="clips/knn_grid.mp4" loop muted playsinline
+              style="display:none;"
+              onloadeddata="this.style.display='block'; document.getElementById('placeholderProposed').style.display='none';"
+              onerror="this.style.display='none'; document.getElementById('placeholderProposed').style.display='block';"></video>
+            <div id="placeholderProposed">
+              <p style="font-size: 1.12rem; font-weight: 700; color: var(--accent-green); margin-bottom: 6px;">
+                🎬 Clipe Método: <code id="codeProposedFile">clips/knn_grid.mp4</code>
+              </p>
+              <p style="font-size: 0.9rem; color: var(--text-muted);" id="descProposed">
+                Com Grade ON: a grade fica vermelha (poupada) nas áreas paradas e apenas os tiles sobre os pedestres
+                ficam verdes.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SLIDE 11: RESULTADOS QUANTITATIVOS (ACURÁCIA VS VELOCIDADE / TEMPO ECONOMIZADO)
+         ========================================================= -->
+    <section class="slide">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
+        <div>
+          <div class="kicker">9. Resultados</div>
+          <h2 style="margin-bottom: 0;">Tempo Economizado (ms/quadro e FPS) vs. Preservação de Acurácia</h2>
+        </div>
+        <div class="btn-group" style="margin-bottom: 0;">
+          <button class="btn active" id="btnVidRes-1" onclick="selectResultVideo(1)">📊 Sequência 1: VIRAT_010203 (1.871
+            frames)</button>
+          <button class="btn" id="btnVidRes-2" onclick="selectResultVideo(2)">📊 Sequência 2: VIRAT_010004 (507
+            frames)</button>
+        </div>
+      </div>
+
+      <div class="grid-2" id="resultsContentBox">
+        <!-- Preenchido dinamicamente pelo JS com os números reais do relatorio_quantitativo.json -->
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SLIDE 12: CONCLUSÕES, DESAFIOS E TRABALHOS FUTUROS
+         ========================================================= -->
+    <section class="slide">
+      <div class="kicker">10. Conclusão, Desafios e Próximos Passos</div>
+      <h2>O que Aprendemos na Prática e Para Onde o Projeto Evolui</h2>
+
+      <div class="grid-3">
+        <div class="card accent-border-green">
+          <span class="badge badge-green">Conclusões do TCC</span>
+          <h3>Prova de Conceito Validada</h3>
+          <ul>
+            <li><strong>Objetivo alcançado:</strong> pesquisamos os métodos e construímos um pipeline funcional que
+              comprova que essa linha de pensamento (filtrar e reaproveitar <em>tiles</em> antes da IA) funciona.</li>
+            <li>Temos duas abordagens claras: <strong>KNN</strong> para máxima precisão e <strong>Hash Wavelet</strong>
+              para máxima redução de tempo.</li>
+          </ul>
+        </div>
+
+        <div class="card accent-border-amber">
+          <span class="badge badge-amber">Desafios &amp; Aprendizados</span>
+          <h3>Além dos Algoritmos Puros</h3>
+          <ul>
+            <li><strong>Tema específico e recente:</strong> foi difícil encontrar artigos que tratassem dessa combinação
+              exata (decisão por <em>tile</em> antes do detector em câmeras fixas).</li>
+            <li><strong>Mecanismos auxiliares são indispensáveis:</strong> usar os métodos de forma "crua" não funciona
+              — foi preciso criar toda uma camada de refinamentos e heurísticas de apoio no pipeline (como <em>blur</em>
+              Gaussiano, tolerância de Hamming, TTL e costura de bordas) para o sistema parar em pé.</li>
+          </ul>
+        </div>
+
+        <div class="card accent-border-cyan">
+          <span class="badge badge-cyan">Trabalhos Futuros</span>
+          <h3>Caminho até o Mundo Real</h3>
+          <ul>
+            <li>Para operação real e contínua, ainda há barreiras práticas importantes — como atingir taxas de
+              <strong>FPS</strong> de tempo real estrito em vídeos longos e variadas condições de cena.
+            </li>
+            <li>O pipeline tem grande espaço para evolução em trabalhos futuros: novas heurísticas de decisão, controle
+              dinâmico de carga e otimizações de implementação para aproximar a solução do uso prático.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Navigation Buttons -->
+  <div class="bottom-nav">
+    <button class="nav-btn" onclick="changeSlide(-1)" title="Slide Anterior (←)">◀</button>
+    <button class="nav-btn" onclick="changeSlide(1)" title="Próximo Slide (→)">▶</button>
+  </div>
+
+  <script>
+    // 1. Navegação de Slides
+    const slides = document.querySelectorAll('.slide');
+    const counterEl = document.getElementById('slideCounter');
+    const progressEl = document.getElementById('progressFill');
+    let currentSlide = 0;
+
+    function updateSlideView() {
+      slides.forEach((s, idx) => {
+        s.classList.toggle('active', idx === currentSlide);
+      });
+      counterEl.textContent = `Slide ${currentSlide + 1} / ${slides.length}`;
+      progressEl.style.width = `${((currentSlide + 1) / slides.length) * 100}%`;
+    }
+
+    function changeSlide(delta) {
+      const next = currentSlide + delta;
+      if (next >= 0 && next < slides.length) {
+        currentSlide = next;
+        updateSlideView();
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+        e.preventDefault();
+        changeSlide(1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        changeSlide(-1);
+      }
+    });
+
+    // 2. Explicação interativa no Slide 5 (Pipeline)
+    const stageTexts = {
+      1: {
+        title: '💡 Etapa 1: Aquisição do Quadro (1280×720)',
+        desc: 'Lê o fluxo de vídeo da câmera estática (dataset VIRAT). Redimensionar esse quadro direto para o YOLO perderia os pedestres distantes.'
+      },
+      2: {
+        title: '💡 Etapa 2: Fatiamento em Grade Fixa (Tiler 5×3)',
+        desc: 'Divide o quadro 1280×720 em 15 recortes de 320×320 px, calculando automaticamente uma sobreposição de 80 px (horizontal) e 120 px (vertical) para não cortar objetos nas bordas.'
+      },
+      3: {
+        title: '💡 Etapa 3: Bloco de Decisão Intercambiável (O Coração do TCC)',
+        desc: 'Recebe os 15 tiles e aplica um filtro leve (Movimento via FrameDiff/KNN/MOG2 ou Árvore de Hash Wavelet). Retorna apenas os tiles que exigem inferência (S) e resgata detecções em cache (C).'
+      },
+      4: {
+        title: '💡 Etapa 4: Inferência Seletiva em Lote (YOLOv8n)',
+        desc: 'O detector caixa-preta processa em um único batch apenas os tiles aprovados (ex.: 2 tiles em vez de 15), reduzindo drasticamente o tempo de CPU.'
+      },
+      5: {
+        title: '💡 Etapa 5: Consolidação Global (IoU + IoM + Costura)',
+        desc: 'Converte as caixas locais para coordenadas globais do quadro, une as detecções novas (R) com as reaproveitadas (C) e funde caixas duplicadas ou cortadas na fronteira entre tiles.'
+      }
+    };
+
+    function explainStage(num) {
+      const box = document.getElementById('stageExplanation');
+      const info = stageTexts[num];
+      box.innerHTML = `<h3>${info.title}</h3><p>${info.desc}</p>`;
+    }
+
+    // 3. Simulador da Grade 5x3 (Slide 6)
+    function renderTilerGrid(withOverlap) {
+      const canvas = document.getElementById('tilerCanvas');
+      const caption = document.getElementById('tilerCaption');
+      canvas.innerHTML = '';
+
+      if (withOverlap) {
+        // 1280x720 com tiles 320x320 em 5x3
+        const W = 1280, H = 720, tw = 320, th = 320;
+        const xs = [0, 240, 480, 720, 960];
+        const ys = [0, 200, 400];
+        const activeDemo = new Set([6, 7]); // Ex: pessoa entre T6 e T7
+
+        let idx = 0;
+        for (let r = 0; r < 3; r++) {
+          for (let c = 0; c < 5; c++) {
+            const div = document.createElement('div');
+            div.className = 'tile-cell ' + (activeDemo.has(idx) ? 'active-green' : '');
+            div.style.left = `${(xs[c] / W) * 100}%`;
+            div.style.top = `${(ys[r] / H) * 100}%`;
+            div.style.width = `${(tw / W) * 100}%`;
+            div.style.height = `${(th / H) * 100}%`;
+            div.textContent = `T${idx}`;
+            canvas.appendChild(div);
+            idx++;
+          }
+        }
+        // Desenha um "pedestre" exatamente na zona de overlap entre T6 e T7
+        const person = document.createElement('div');
+        person.style.position = 'absolute';
+        person.style.left = '41%';
+        person.style.top = '42%';
+        person.style.width = '3.2%';
+        person.style.height = '16%';
+        person.style.background = '#facc15';
+        person.style.border = '2px solid #fff';
+        person.style.borderRadius = '4px';
+        person.style.zIndex = '10';
+        person.title = 'Pedestre protegido pela zona de overlap!';
+        canvas.appendChild(person);
+
+        caption.textContent = 'Com Overlap Automático: as faixas de sobreposição garantem que o pedestre amarelo na fronteira apareça inteiro dentro de T6 e T7!';
+      } else {
+        // Sem overlap (corte seco) -> mostra o pedestre partido ao meio
+        for (let r = 0; r < 3; r++) {
+          for (let c = 0; c < 5; c++) {
+            const div = document.createElement('div');
+            div.className = 'tile-cell skip-red';
+            div.style.left = `${c * 20}%`;
+            div.style.top = `${r * 33.33}%`;
+            div.style.width = `20%`;
+            div.style.height = `33.33%`;
+            div.textContent = `Corte Seco`;
+            canvas.appendChild(div);
+          }
+        }
+        const personCut = document.createElement('div');
+        personCut.style.position = 'absolute';
+        personCut.style.left = '39%';
+        personCut.style.top = '42%';
+        personCut.style.width = '3.2%';
+        personCut.style.height = '16%';
+        personCut.style.background = '#ef4444';
+        personCut.style.border = '2px dashed #fff';
+        personCut.style.zIndex = '10';
+        canvas.appendChild(personCut);
+
+        caption.textContent = 'Sem Overlap: se o pedestre estiver sobre a linha divisória entre dois tiles, ele é cortado ao meio e o detector falha!';
+      }
+    }
+
+    function toggleOverlapView(withOverlap) {
+      document.getElementById('btnOverlapOn').classList.toggle('active', withOverlap);
+      document.getElementById('btnOverlapOff').classList.toggle('active', !withOverlap);
+      renderTilerGrid(withOverlap);
+    }
+
+    // 4. Simulador da Árvore de Hash Wavelet (Slide 8)
+    function setHashMode(mode) {
+      document.getElementById('btnHashHit').classList.toggle('active', mode === 'hit');
+      document.getElementById('btnHashMiss').classList.toggle('active', mode === 'miss');
+      const box = document.getElementById('hashTreeBox');
+
+      if (mode === 'hit') {
+        box.innerHTML = `
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; text-align:center;">
+            <div class="stage-node" style="border-color:var(--accent-green);"><strong>Nível 5×5</strong><div class="desc">25 bits (Tol: 1b)<br/> Match</div></div>
+            <div class="arrow">→</div>
+            <div class="stage-node" style="border-color:var(--accent-green);"><strong>Nível 10×10</strong><div class="desc">100 bits (Tol: 2b)<br/> Match</div></div>
+            <div class="arrow">→</div>
+            <div class="stage-node" style="border-color:var(--accent-green);"><strong>Nível 20×20</strong><div class="desc">400 bits (Tol: 6b)<br/> Match</div></div>
+            <div class="arrow">→</div>
+            <div class="stage-node" style="border-color:var(--accent-green);"><strong>Nível 40×40</strong><div class="desc">1600 bits (Tol: 24b)<br/> Match</div></div>
+            <div class="arrow">→</div>
+            <div class="stage-node" style="border-color:var(--accent-green);"><strong>Folha 80×80</strong><div class="desc">6400 bits<br/> CACHE HIT</div></div>
+          </div>
+          <div style="background: rgba(34, 197, 94, 0.14); border: 1px solid var(--accent-green); padding: 14px; border-radius: 10px; text-align: center;">
+            <strong style="color: var(--accent-green); font-size: 1.05rem;"> Resultado: O YOLO NÃO é chamado</strong>
+            <p style="font-size: 0.92rem; margin-top: 4px;">As caixas delimitadoras salvas na folha são reaproveitadas instantaneamente em O(1).</p>
+          </div>
+        `;
+      } else {
+        box.innerHTML = `
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; text-align:center;">
+            <div class="stage-node" style="border-color:var(--accent-green);"><strong>Nível 5×5</strong><div class="desc">25 bits<br/>Match</div></div>
+            <div class="arrow">→</div>
+            <div class="stage-node" style="border-color:var(--accent-green);"><strong>Nível 10×10</strong><div class="desc">100 bits<br/>Match</div></div>
+            <div class="arrow">→</div>
+            <div class="stage-node" style="border-color:var(--accent-red);"><strong>Nível 20×20</strong><div class="desc">Dist. Hamming &gt; 6b<br/>Divergiu!</div></div>
+            <div class="arrow" style="opacity:0.3;">→</div>
+            <div class="stage-node" style="opacity:0.35;"><strong>Nível 40×40</strong><div class="desc">Nem calcula/busca</div></div>
+            <div class="arrow" style="opacity:0.3;">→</div>
+            <div class="stage-node" style="opacity:0.35;"><strong>Folha 80×80</strong><div class="desc">—</div></div>
+          </div>
+          <div style="background: rgba(239, 68, 68, 0.14); border: 1px solid var(--accent-red); padding: 14px; border-radius: 10px; text-align: center;">
+            <strong style="color: var(--accent-red); font-size: 1.05rem;">🔍 Resultado: Cache MISS (Mudança detectada no Nível 20×20)</strong>
+            <p style="font-size: 0.92rem; margin-top: 4px;">A busca para cedo na árvore! O tile é enviado para o YOLO e o novo resultado é gravado na árvore ao final do frame.</p>
+          </div>
+        `;
+      }
+    }
+
+    // 5. Controle sincronizado de vídeos e Seletores de Método / Grade (Slide 10)
+    let currentExpMethod = 'knn';
+    let showTileGrid = true;
+
+    const expMeta = {
+      knn: {
+        name: 'Pipeline Proposto: KNN',
+        sub: '730,15 ms/frame (2,01x mais rápido • Recall: 99,81% | F1: 99,91%)',
+        descGrid: 'KNN com Grade ON: envia só 47% dos tiles para o YOLO e preserva 99,81% das pessoas!',
+        descClean: 'KNN Vídeo Limpo: sem a grade na frente, vemos que todas as pessoas continuam sendo detectadas igual ao Baseline!'
+      },
+      hash: {
+        name: 'Pipeline Proposto: Hash Wavelet',
+        sub: '286,30 ms/frame (5,11x a 8,01x mais rápido • Recall: 97,05% | F1: 95,93%)',
+        descGrid: 'Hash Wavelet com Grade ON: envia apenas 11% a 18% dos tiles pro YOLO! O resto vem direto do Cache Hit em 11,9 ms.',
+        descClean: 'Hash Wavelet Vídeo Limpo: velocidade 5x a 8x maior com reaproveitamento direto das caixas em memória.'
+      },
+      framediff: {
+        name: 'Pipeline Proposto: FrameDiff (t − 3)',
+        sub: '562,91 ms/frame (2,60x mais rápido • Recall: 89,76% | F1: 94,60%)',
+        descGrid: 'FrameDiff com Grade ON: envia 37,4% dos tiles comparando com 3 quadros atrás (12,8 ms de filtro).',
+        descClean: 'FrameDiff Vídeo Limpo: resultado final das caixas consolidadas pelo pipeline.'
+      },
+      mog2: {
+        name: 'Pipeline Proposto: MOG2',
+        sub: '436,30 ms/frame (3,36x mais rápido • Recall: 70,87% | F1: 82,92%)',
+        descGrid: 'MOG2 com Grade ON: envia 26,9% dos tiles, mas a abertura morfológica agressiva perde alvos menores.',
+        descClean: 'MOG2 Vídeo Limpo: resultado final das caixas consolidadas pelo pipeline.'
+      }
+    };
+
+    function updateExperimentVideos() {
+      const suffix = showTileGrid ? 'grid' : 'clean';
+      const baseFile = `clips/baseline_${suffix}.mp4`;
+      const propFile = `clips/${currentExpMethod}_${suffix}.mp4`;
+
+      const vidBase = document.getElementById('videoBaseline');
+      const vidProp = document.getElementById('videoProposed');
+
+      vidBase.src = baseFile;
+      vidProp.src = propFile;
+      vidBase.load();
+      vidProp.load();
+      vidBase.play().catch(() => { });
+      vidProp.play().catch(() => { });
+
+      document.getElementById('codeBaselineFile').textContent = baseFile;
+      document.getElementById('codeProposedFile').textContent = propFile;
+
+      const meta = expMeta[currentExpMethod];
+      document.getElementById('methodBadge').textContent = meta.name;
+      document.getElementById('methodSubtitle').textContent = meta.sub;
+      document.getElementById('descProposed').textContent = showTileGrid ? meta.descGrid : meta.descClean;
+
+      document.getElementById('baselineSubtitle').textContent = showTileGrid
+        ? '15 / 15 tiles verdes todo frame (1.464 ms/frame • 0,68 FPS)'
+        : 'Vídeo Limpo — Todas as pessoas detectadas (Referência 100%)';
+      document.getElementById('descBaseline').textContent = showTileGrid
+        ? 'Todos os 15 quadrados verdes ativos o tempo inteiro, executando o YOLO até no estacionamento vazio.'
+        : 'Saída limpa do Baseline (apenas as caixas das pessoas consolidadas no quadro).';
+    }
+
+    function selectExperimentMethod(method) {
+      currentExpMethod = method;
+      ['knn', 'hash', 'framediff', 'mog2'].forEach(m => {
+        document.getElementById(`btnMethod-${m}`).classList.toggle('active', m === method);
+      });
+      updateExperimentVideos();
+    }
+
+    function toggleExperimentGrid(gridOn) {
+      showTileGrid = gridOn;
+      document.getElementById('btnGrid-on').classList.toggle('active', gridOn);
+      document.getElementById('btnGrid-off').classList.toggle('active', !gridOn);
+      updateExperimentVideos();
+    }
+
+    function syncVideos(action) {
+      const vids = document.querySelectorAll('.compare-video');
+      vids.forEach(v => {
+        if (action === 'play') v.play().catch(() => { });
+        else if (action === 'pause') v.pause();
+        else if (action === 'restart') { v.currentTime = 0; v.play().catch(() => { }); }
+      });
+    }
+
+    // 6. Controle dos vídeos de Máscara P&B no Slide 7
+    function selectMaskMethod(method) {
+      ['knn', 'framediff', 'mog2'].forEach(m => {
+        document.getElementById(`btnMask-${m}`).classList.toggle('active', m === method);
+      });
+      const origFile = `clips/${method}_grid.mp4`;
+      const maskFile = `clips/${method}_mask.mp4`;
+
+      const vOrig = document.getElementById('vidMaskOrig');
+      const vMask = document.getElementById('vidMaskBW');
+      vOrig.src = origFile;
+      vMask.src = maskFile;
+      vOrig.load();
+      vMask.load();
+      vOrig.play().catch(() => { });
+      vMask.play().catch(() => { });
+
+      document.getElementById('codeMaskOrig').textContent = origFile;
+      document.getElementById('codeMaskBW').textContent = maskFile;
+    }
+
+    function syncMaskVideos(action) {
+      const vids = document.querySelectorAll('.mask-video');
+      vids.forEach(v => {
+        if (action === 'play') v.play().catch(() => { });
+        else if (action === 'pause') v.pause();
+      });
+    }
+
+    // 7. Dados Quantitativos Reais do Slide 11 (2 Sequências VIRAT)
+    const quantResults = {
+      1: {
+        title: 'Sequência 1: VIRAT_S_010203_08_000895_000975.mp4 (1.871 quadros • 17.585 instâncias de pedestres)',
+        rows: [
+          { name: 'Baseline (15 tiles)', filter: '—', yolo: '1463,4 ms', total: '1464,1 ms', fps: '0,68', speedup: '1,00x', tiles: '100,0%', prec: '100,00%', rec: '100,00%', f1: '100,00%', timePct: 100, f1Num: 100.0, color: 'var(--accent-red)' },
+          { name: 'KNN (Subtração)', filter: '33,6 ms', yolo: '695,8 ms', total: '730,2 ms (−50,1%)', fps: '1,37', speedup: '2,01x', tiles: '47,0%', prec: '100,00%', rec: '99,81%', f1: '99,91%', timePct: 49.9, f1Num: 99.91, color: 'var(--accent-green)' },
+          { name: 'FrameDiff (t − 3)', filter: '12,9 ms', yolo: '553,6 ms', total: '562,9 ms (−61,6%)', fps: '1,78', speedup: '2,60x', tiles: '37,4%', prec: '99,99%', rec: '89,76%', f1: '94,60%', timePct: 38.4, f1Num: 94.60, color: 'var(--accent-amber)' },
+          { name: 'MOG2 (Gaussiana)', filter: '40,6 ms', yolo: '438,0 ms', total: '436,3 ms (−70,2%)', fps: '2,29', speedup: '3,36x', tiles: '26,9%', prec: '99,91%', rec: '70,87%', f1: '82,92%', timePct: 29.8, f1Num: 82.92, color: '#a855f7' },
+          { name: 'Hash Wavelet (Árvore)', filter: '11,9 ms', yolo: '301,6 ms', total: '286,3 ms (−80,4%)', fps: '3,49', speedup: '5,11x', tiles: '18,3%', prec: '94,83%', rec: '97,05%', f1: '95,93%', timePct: 19.6, f1Num: 95.93, color: 'var(--accent-cyan)' }
+        ],
+        takeaway1: '<strong>KNN = Fidelidade Quase Perfeita:</strong> Corta o tempo por quadro pela metade (<strong>2,01x mais rápido</strong>, poupando 53% dos tiles) com <strong>99,81% de Recall e 100% de Precisão</strong> (perdeu apenas 33 caixas em 17.585!).',
+        takeaway2: '<strong>Hash Wavelet = Velocidade 5,11x Maior com Alta Acurácia:</strong> Reduz o tempo por quadro de 1.464 ms para <strong>286,3 ms</strong> (enviando apenas <strong>18,3% dos tiles</strong> ao YOLO) e ainda mantém <strong>97,05% de Recall (F1 = 95,93%)</strong>!'
+      },
+      2: {
+        title: 'Sequência 2: VIRAT_S_010004_01_000163_000188.mp4 (507 quadros • 3.463 instâncias de pedestres)',
+        rows: [
+          { name: 'Baseline (15 tiles)', filter: '—', yolo: '1440,8 ms', total: '1441,2 ms', fps: '0,69', speedup: '1,00x', tiles: '100,0%', prec: '100,00%', rec: '100,00%', f1: '100,00%', timePct: 100, f1Num: 100.0, color: 'var(--accent-red)' },
+          { name: 'KNN (Subtração)', filter: '32,1 ms', yolo: '933,8 ms', total: '966,4 ms (−32,9%)', fps: '1,03', speedup: '1,49x', tiles: '63,7%', prec: '100,00%', rec: '85,01%', f1: '91,90%', timePct: 67.1, f1Num: 91.90, color: 'var(--accent-green)' },
+          { name: 'FrameDiff (t − 3)', filter: '11,9 ms', yolo: '835,1 ms', total: '847,4 ms (−41,2%)', fps: '1,18', speedup: '1,70x', tiles: '57,6%', prec: '99,96%', rec: '78,17%', f1: '87,73%', timePct: 58.8, f1Num: 87.73, color: 'var(--accent-amber)' },
+          { name: 'MOG2 (Gaussiana)', filter: '39,6 ms', yolo: '499,8 ms', total: '526,7 ms (−63,5%)', fps: '1,90', speedup: '2,74x', tiles: '33,3%', prec: '99,94%', rec: '48,37%', f1: '65,19%', timePct: 36.5, f1Num: 65.19, color: '#a855f7' },
+          { name: 'Hash Wavelet (Árvore)', filter: '11,1 ms', yolo: '208,0 ms', total: '179,9 ms (−87,5%)', fps: '5,56', speedup: '8,01x', tiles: '11,1%', prec: '84,36%', rec: '83,77%', f1: '84,06%', timePct: 12.5, f1Num: 84.06, color: 'var(--accent-cyan)' }
+        ],
+        takeaway1: '<strong>KNN = Maior F1-Score (91,90%) e Zero Falsos Positivos:</strong> Mantém 100% de precisão e 85,01% de Recall em uma cena mais desafiadora com alvos parados.',
+        takeaway2: '<strong>Hash Wavelet = Aceleração de 8,01x (88,9% dos tiles poupados!):</strong> Derruba a latência de 1.441 ms para apenas <strong>179,9 ms/quadro (5,56 FPS)</strong> com filtro custando só 11,1 ms e <strong>F1 de 84,06%</strong>.'
+      }
+    };
+
+    function selectResultVideo(vidIdx) {
+      document.getElementById('btnVidRes-1').classList.toggle('active', vidIdx === 1);
+      document.getElementById('btnVidRes-2').classList.toggle('active', vidIdx === 2);
+
+      const d = quantResults[vidIdx];
+      const box = document.getElementById('resultsContentBox');
+
+      const timeBars = d.rows.map(r => `
+        <div class="bar-row" style="margin-bottom: 10px;">
+          <div class="bar-label" style="font-size: 0.85rem;">
+            <span><strong>${r.name}</strong> (Filtro: ${r.filter})</span>
+            <span style="color:${r.color};">${r.total} • <strong>${r.fps} FPS (${r.speedup})</strong></span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="width: ${r.timePct}%; background: ${r.color};"></div></div>
+        </div>
+      `).join('');
+
+      const tableRows = d.rows.map(r => `
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.07);">
+          <td style="padding: 6px 4px; font-weight:700; color:${r.color};">${r.name}</td>
+          <td style="padding: 6px 4px; text-align:center;">${r.tiles}</td>
+          <td style="padding: 6px 4px; text-align:center;">${r.prec}</td>
+          <td style="padding: 6px 4px; text-align:center; font-weight:700;">${r.rec}</td>
+          <td style="padding: 6px 4px; text-align:center; font-weight:700; color:#fff;">${r.f1}</td>
+          <td style="padding: 6px 4px; text-align:center; font-weight:700; color:var(--accent-cyan);">${r.speedup}</td>
+        </tr>
+      `).join('');
+
+      box.innerHTML = `
+        <div class="card accent-border-cyan" style="padding: 16px 20px;">
+          <span class="badge badge-cyan">Eficiência: Latência Total por Quadro e Speedup</span>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 4px;">${d.title}</p>
+          ${timeBars}
+          <div style="background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.3); border-radius: 8px; padding: 10px 12px; margin-top: auto; font-size: 0.85rem; line-height: 1.45;">
+            ⚡ ${d.takeaway2}
+          </div>
+        </div>
+
+        <div class="card accent-border-green" style="padding: 16px 20px;">
+          <span class="badge badge-green">Eficácia (IoU &ge; 0,40) e Resumo Comparativo</span>
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-top: 4px;">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border-color); color: var(--accent-cyan);">
+                <th style="text-align:left; padding: 6px 4px;">Método</th>
+                <th style="text-align:center; padding: 6px 4px;">Tiles no YOLO</th>
+                <th style="text-align:center; padding: 6px 4px;">Precision</th>
+                <th style="text-align:center; padding: 6px 4px;">Recall</th>
+                <th style="text-align:center; padding: 6px 4px;">F1-Score</th>
+                <th style="text-align:center; padding: 6px 4px;">Speedup</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+          <div style="background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.3); border-radius: 8px; padding: 10px 12px; margin-top: auto; font-size: 0.85rem; line-height: 1.45;">
+            🎯 ${d.takeaway1}
+          </div>
+        </div>
+      `;
+    }
+
+    // Inicializa simuladores
+    renderTilerGrid(true);
+    setHashMode('hit');
+    selectResultVideo(1);
+  </script>
+</body>
+
+</html>

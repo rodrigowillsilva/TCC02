@@ -1,0 +1,254 @@
+{
+  "video": "S:\\Workspace\\UNIFEI\\TCC\\TCC-Rodrigo\\TCC02\\videos\\VIRAT_S_010004_01_000163_000188.mp4",
+  "frames": {
+    "0": {
+      "timestamp_ms": 0.0,
+      "consolidated": []
+    },
+    "1": {
+      "timestamp_ms": 41.71881518564872,
+      "consolidated": []
+    },
+    "2": {
+      "timestamp_ms": 83.43763037129744,
+      "consolidated": [
+        {
+          "x": 702,
+          "y": 220,
+          "w": 13,
+          "h": 34,
+          "class": "person",
+          "conf": 0.7034426331520081
+        },
+        {
+          "x": 717,
+          "y": 219,
+          "w": 11,
+          "h": 21,
+          "class": "person",
+          "conf": 0.4236272871494293
+        },
+        {
+          "x": 594,
+          "y": 228,
+          "w": 14,
+          "h": 49,
+          "class": "person",
+          "conf": 0.41018566489219666
+        },
+        {
+          "x": 604,
+          "y": 507,
+          "w": 53,
+          "h": 12,
+          "class": "person",
+          "conf": 0.29434311389923096
+        }
+      ]
+    },
+    "3": {
+      "timestamp_ms": 125.1564455569462,
+      "consolidated": [
+        {
+          "x": 701,
+          "y": 220,
+          "w": 13,
+          "h": 34,
+          "class": "person",
+          "conf": 0.6488993763923645
+        },
+        {
+          "x": 595,
+          "y": 229,
+          "w": 15,
+          "h": 48,
+          "class": "person",
+          "conf": 0.6471121907234192
+        },
+        {
+          "x": 338,
+          "y": 288,
+          "w": 19,
+          "h": 31,
+          "class": "person",
+          "conf": 0.5996219515800476
+        },
+        {
+          "x": 359,
+          "y": 254,
+          "w": 16,
+          "h": 42,
+          "class": "person",
+          "conf": 0.49996089935302734
+        },
+        {
+          "x": 604,
+          "y": 504,
+          "w": 53,
+          "h": 14,
+          "class": "person",
+          "conf": 0.402545303106308
+        },
+        {
+          "x": 718,
+          "y": 219,
+          "w": 10,
+          "h": 26,
+          "class": "person",
+          "conf": 0.32130762934684753
+        }
+      ]
+    },
+    "4": {
+      "timestamp_ms": 166.8752607425949,
+      "consolidated": [
+        {
+          "x": 700,
+          "y": 220,
+          "w": 14,
+          "h": 34,
+          "class": "person",
+          "conf": 0.7067602872848511
+        },
+        {
+          "x": 597,
+          "y": 230,
+          "w": 15,
+          "h": 48,
+          "class": "person",
+          "conf": 0.6198974251747131
+        },
+        {
+          "x": 339,
+          "y": 288,
+          "w": 19,
+          "h": 31,
+          "class": "person",
+          "conf": 0.5771793723106384
+        },
+        {
+          "x": 606,
+          "y": 504,
+          "w": 51,
+          "h": 14,
+          "class": "person",
+          "conf": 0.39134982228279114
+        },
+        {
+          "x": 716,
+          "y": 219,
+          "w": 11,
+          "h": 20,
+          "class": "person",
+          "conf": 0.35490652918815613
+        },
+        {
+          "x": 359,
+          "y": 254,
+          "w": 16,
+          "h": 45,
+          "class": "person",
+          "conf": 0.25960707664489746
+        }
+      ]
+    },
+    "5": {
+      "timestamp_ms": 208.59407592824363,
+      "consolidated": [
+        {
+          "x": 700,
+          "y": 219,
+          "w": 14,
+          "h": 34,
+          "class": "person",
+          "conf": 0.7352186441421509
+        },
+        {
+          "x": 599,
+          "y": 229,
+          "w": 15,
+          "h": 48,
+          "class": "person",
+          "conf": 0.6263708472251892
+        },
+        {
+          "x": 339,
+          "y": 288,
+          "w": 18,
+          "h": 31,
+          "class": "person",
+          "conf": 0.5021538734436035
+        },
+        {
+          "x": 606,
+          "y": 504,
+          "w": 51,
+          "h": 14,
+          "class": "person",
+          "conf": 0.3903273940086365
+        },
+        {
+          "x": 716,
+          "y": 219,
+          "w": 10,
+          "h": 16,
+          "class": "person",
+          "conf": 0.366035521030426
+        },
+        {
+          "x": 359,
+          "y": 254,
+          "w": 16,
+          "h": 43,
+          "class": "person",
+          "conf": 0.28697431087493896
+        }
+      ]
+    }
+  },
+  "config": {
+    "method": "KNN",
+    "history": 500,
+    "dist2Threshold": 200.0,
+    "min_pixels_original": 250,
+    "scale_factor": 0.5
+  },
+  "telemetry": {
+    "timings": {
+      "00_Pipeline_Total (por frame)": {
+        "calls": 6,
+        "total_seconds": 6.4306,
+        "avg_ms": 1071.77
+      },
+      "01_Fatiamento (Tiler)": {
+        "calls": 6,
+        "total_seconds": 0.0014,
+        "avg_ms": 0.24
+      },
+      "02_Filtro (DecisionBlock)": {
+        "calls": 6,
+        "total_seconds": 0.4042,
+        "avg_ms": 67.36
+      },
+      "03_IA_Infer\u00eancia (YOLO)": {
+        "calls": 4,
+        "total_seconds": 5.8701,
+        "avg_ms": 1467.54
+      },
+      "04_Limpeza (Consolidator NMS)": {
+        "calls": 4,
+        "total_seconds": 0.0005,
+        "avg_ms": 0.13
+      },
+      "05_Renderiza\u00e7\u00e3o_Video": {
+        "calls": 6,
+        "total_seconds": 0.1521,
+        "avg_ms": 25.35
+      }
+    },
+    "cpu": {
+      "average_percent": 28.49,
+      "max_percent": 62.92
+    }
+  }
+}
