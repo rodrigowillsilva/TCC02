@@ -1,6 +1,18 @@
-# Pasta do Artigo (repositório separado em TCC02_article)
-ECO_artigo_TCC02/
+# Pacote zip original do template
 ECO_artigo_TCC02.zip
+
+# Arquivos auxiliares de compilação LaTeX
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.lof
+*.lot
 
 # Ambientes virtuais e cache do Python
 .venv/
@@ -29,3 +41,5 @@ Thumbs.db
 .vscode/
 .idea/
 *.tmp
+*.bak
+*~
